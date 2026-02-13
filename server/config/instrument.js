@@ -1,11 +1,11 @@
 // Import with `import * as Sentry from "@sentry/node"` if you are using ESM
 import * as Sentry from "@sentry/node"
-import { nodeProfilingIntegration } from "@sentry/profiling-node";
+// import { nodeProfilingIntegration } from "@sentry/profiling-node"; // Disabled: native module issues
 
 Sentry.init({
   dsn: "",
   integrations: [
-    nodeProfilingIntegration(),
+    // nodeProfilingIntegration(), // Disabled: native module issues on Windows/Vercel
     Sentry.mongooseIntegration()
   ],
   // Tracing
@@ -13,7 +13,7 @@ Sentry.init({
 });
 // Manually call startProfiler and stopProfiler
 // to profile the code in between
-Sentry.profiler.startProfiler();
+// Sentry.profiler.startProfiler(); // Disabled: profiling integration disabled
 
 // Starts a transaction that will also be profiled
 Sentry.startSpan({
