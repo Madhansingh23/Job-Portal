@@ -19,7 +19,7 @@ const ManageJobs = () => {
 
     try {
 
-      const { data } = await axios.get(backendUrl + '/api/company/list-jobs',
+      const { data } = await axios.get(`${backendUrl}/api/company/list-jobs`,
         { headers: { token: companyToken } }
       )
 
@@ -40,7 +40,7 @@ const ManageJobs = () => {
 
     try {
 
-      const { data } = await axios.post(backendUrl + '/api/company/change-visiblity',
+      const { data } = await axios.post(`${backendUrl}/api/company/change-visiblity`,
         { id },
         { headers: { token: companyToken } }
       )

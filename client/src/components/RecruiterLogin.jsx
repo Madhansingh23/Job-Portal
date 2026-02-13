@@ -31,7 +31,7 @@ const RecruiterLogin = () => {
 
             if (state === "Login") {
 
-                const { data } = await axios.post(backendUrl + '/api/company/login', { email, password })
+                const { data } = await axios.post(`${backendUrl}/api/company/login`, { email, password })
 
                 if (data.success) {
                     setCompanyData(data.company)
@@ -51,7 +51,7 @@ const RecruiterLogin = () => {
                 formData.append('email', email)
                 formData.append('image', image)
 
-                const { data } = await axios.post(backendUrl + '/api/company/register', formData)
+                const { data } = await axios.post(`${backendUrl}/api/company/register`, formData)
 
                 if (data.success) {
                     setCompanyData(data.company)

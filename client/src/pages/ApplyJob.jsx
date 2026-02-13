@@ -29,7 +29,7 @@ const ApplyJob = () => {
 
     try {
 
-      const { data } = await axios.get(backendUrl + `/api/jobs/${id}`)
+      const { data } = await axios.get(`${backendUrl}/api/jobs/${id}`)
 
       if (data.success) {
         setJobData(data.job)
@@ -57,7 +57,7 @@ const ApplyJob = () => {
 
       const token = await getToken()
 
-      const { data } = await axios.post(backendUrl + '/api/users/apply',
+      const { data } = await axios.post(`${backendUrl}/api/users/apply`,
         { jobId: JobData._id },
         { headers: { Authorization: `Bearer ${token}` } }
       )

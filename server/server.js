@@ -20,7 +20,10 @@ connectDB()
 await connectCloudinary()
 
 // Middlewares
-app.use(cors())
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://localhost:5173', 'https://job-portal-client-one-omega.vercel.app'],
+  credentials: true
+}))
 app.use(express.json())
 app.use(clerkMiddleware())
 

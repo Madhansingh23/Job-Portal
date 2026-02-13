@@ -16,7 +16,7 @@ const ViewApplications = () => {
 
     try {
 
-      const { data } = await axios.get(backendUrl + '/api/company/applicants',
+      const { data } = await axios.get(`${backendUrl}/api/company/applicants`,
         { headers: { token: companyToken } }
       )
 
@@ -36,7 +36,7 @@ const ViewApplications = () => {
   const changeJobApplicationStatus = async (id, status) => {
     try {
 
-      const { data } = await axios.post(backendUrl + '/api/company/change-status',
+      const { data } = await axios.post(`${backendUrl}/api/company/change-status`,
         { id, status },
         { headers: { token: companyToken } }
       )
