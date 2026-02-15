@@ -24,19 +24,25 @@ const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:5173',
   'https://job-portal-client-one-omega.vercel.app',
-  'https://job-portal-client-one-omega.vercel.app/',
   'https://job-portal-client-deymmhizs-madhansingh23s-projects.vercel.app'
 ]
 
 const corsOptions = {
+  // allow requests from any origin but echo back the request origin
   origin: function (origin, callback) {
     // allow requests with no origin (like curl, server-to-server)
     if (!origin) return callback(null, true)
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true)
-    } else {
-      callback(new Error('Not allowed by CORS'))
+    // allow known local/dev origins or any vercel deployment origin
+    if (
+      allowedOrigins.indexOf(origin) !== -1 ||
+      origin.endsWith('.vercel.app') ||
+      origin.includes('localhost')
+    ) {
+      return callback(null, true)
     }
+    // fallback: allow but log for visibility
+    console.warn('CORS allowing unknown origin:', origin)
+    return callback(null, true)
   },
   credentials: true,
   optionsSuccessStatus: 200
@@ -48,13 +54,11 @@ app.options('*', cors(corsOptions))
 app.use(express.json())
 // Safety middleware: explicitly set CORS headers and respond to preflight
 app.use((req, res, next) => {
-  const origin = req.headers.origin || ''
-  if (allowedOrigins.includes(origin) || !origin) {
-    res.header('Access-Control-Allow-Origin', origin || '*')
-    res.header('Access-Control-Allow-Credentials', 'true')
-    res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS')
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, token')
-  }
+  const origin = req.headers.origin || '*'
+  res.header('Access-Control-Allow-Origin', origin)
+  res.header('Access-Control-Allow-Credentials', 'true')
+  res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS')
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, token')
   if (req.method === 'OPTIONS') return res.sendStatus(200)
   next()
 })
