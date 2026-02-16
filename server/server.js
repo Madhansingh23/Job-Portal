@@ -1,23 +1,77 @@
-import './config/instrument.js'
+// Sentry disabled: import removed to avoid compatibility issues
+// import * as Sentry from "@sentry/node";
 import express from 'express'
 import cors from 'cors'
 import 'dotenv/config'
 import connectDB from './config/db.js'
-import * as Sentry from "@sentry/node";
 import { clerkWebhooks } from './controllers/webhooks.js'
 import companyRoutes from './routes/companyRoutes.js'
 import connectCloudinary from './config/cloudinary.js'
 import jobRoutes from './routes/jobRoutes.js'
 import userRoutes from './routes/userRoutes.js'
 import { clerkMiddleware } from '@clerk/express'
+import User from './models/User.js'
 
+
+// Sentry initialization disabled
+// Sentry.init({
+//   dsn: process.env.SENTRY_DSN || 'https://40dc79eacab0415b112a320613fe6de8@o4508103285538816.ingest.us.sentry.io/4510890581032960',
+//   tracesSampleRate: 1.0,
+//   environment: process.env.NODE_ENV || 'development',
+// });
 
 // Initialize Express
 const app = express()
 
 // Connect to database
-connectDB()
-await connectCloudinary()
+const startServer = async () => {
+  await connectDB()
+  await connectCloudinary()
+
+  // Sentry request handler disabled
+  // app.use(Sentry.handlers.requestHandler())
+
+  // Test route to check MongoDB and Sentry integration
+  app.get('/api/test-user/:id', async (req, res, next) => {
+    try {
+      const user = await User.findById(req.params.id)
+      if (!user) {
+        // This error will be captured by Sentry
+        const err = new Error('User not found in MongoDB')
+        err.status = 404
+        throw err
+      }
+      res.json({ success: true, user })
+    } catch (error) {
+      next(error)
+    }
+  })
+
+  // ...existing middleware and routes...
+
+  // Sentry error handler disabled
+  // app.use(Sentry.handlers.errorHandler())
+
+  // server will be started after middleware setup (single listener at bottom)
+}
+
+startServer()
+// Sentry request handler disabled
+// app.use(Sentry.Handlers.requestHandler())
+// Test route to check MongoDB and Sentry integration (disabled duplicate)
+// app.get('/api/test-user/:id', async (req, res, next) => {
+//   try {
+//     const user = await User.findById(req.params.id)
+//     if (!user) {
+//       const err = new Error('User not found in MongoDB')
+//       err.status = 404
+//       throw err
+//     }
+//     res.json({ success: true, user })
+//   } catch (error) {
+//     next(error)
+//   }
+// })
 
 // Middlewares
 const allowedOrigins = [
@@ -71,19 +125,20 @@ app.use(clerkMiddleware())
 
 // Routes
 app.get('/', (req, res) => res.send("API Working"))
-app.get("/debug-sentry", function mainHandler(req, res) {
-  throw new Error("My first Sentry error!");
-});
+// Debug Sentry route disabled
+// app.get("/debug-sentry", function mainHandler(req, res) {
+//   throw new Error("My first Sentry error!");
+// });
 app.post('/webhooks', clerkWebhooks)
 app.use('/api/company', companyRoutes)
 app.use('/api/jobs', jobRoutes)
 app.use('/api/users', userRoutes)
 
+// Sentry error handler disabled
+// app.use(Sentry.Handlers.errorHandler())
+
 // Port
 const PORT = process.env.PORT || 5000
-
-Sentry.setupExpressErrorHandler(app);
-
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 })

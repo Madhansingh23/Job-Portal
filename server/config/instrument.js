@@ -3,7 +3,7 @@ import * as Sentry from "@sentry/node"
 // import { nodeProfilingIntegration } from "@sentry/profiling-node"; // Disabled: native module issues
 
 Sentry.init({
-  dsn: "",
+  dsn: "https://40dc79eacab0415b112a320613fe6de8@o4508103285538816.ingest.us.sentry.io/4510890581032960", // https://40dc79eacab0415b112a320613fe6de8@o4508103285538816.ingest.us.sentry.io/4510890581032960
   integrations: [
     // nodeProfilingIntegration(), // Disabled: native module issues on Windows/Vercel
     Sentry.mongooseIntegration()
