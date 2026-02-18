@@ -4,6 +4,7 @@ import { v2 as cloudinary } from 'cloudinary'
 import generateToken from "../utils/generateToken.js";
 import Job from "../models/Job.js";
 import JobApplication from "../models/JobApplication.js";
+import Group from "../models/Group.js";
 
 // Register a new company
 export const registerCompany = async (req, res) => {
@@ -105,7 +106,7 @@ export const getCompanyData = async (req, res) => {
 // Post New Job
 export const postJob = async (req, res) => {
 
-    const { title, description, location, salary, level, category } = req.body
+    const { title, description, location, salary, level, category, minCGPA, eligibleDepts, eligibleGroups, targetBatch, roleDescription, requirements, rounds } = req.body
 
     const companyId = req.company._id
 
@@ -119,7 +120,14 @@ export const postJob = async (req, res) => {
             companyId,
             date: Date.now(),
             level,
-            category
+            category,
+            minCGPA,
+            eligibleDepts,
+            eligibleGroups,
+            targetBatch,
+            roleDescription,
+            requirements,
+            rounds
         })
 
         await newJob.save()
@@ -143,8 +151,8 @@ export const getCompanyJobApplicants = async (req, res) => {
 
         // Find job applications for the user and populate related data
         const applications = await JobApplication.find({ companyId })
-            .populate('userId', 'name image resume')
-            .populate('jobId', 'title location category level salary')
+            .populate('userId', 'name image resume registerNumber dept cgpa email phone')
+            .populate('jobId', 'title location category level salary rounds')
             .exec()
 
         return res.json({ success: true, applications })
@@ -177,20 +185,48 @@ export const getCompanyPostedJobs = async (req, res) => {
 
 // Change Job Application Status
 export const ChangeJobApplicationsStatus = async (req, res) => {
-
     try {
-
         const { id, status } = req.body
 
-        // Find Job application and update status
-        await JobApplication.findOneAndUpdate({ _id: id }, { status })
+        const application = await JobApplication.findById(id).populate('jobId', 'rounds')
+        if (!application) {
+            return res.json({ success: false, message: 'Application not found' })
+        }
 
+        const rounds = application.jobId?.rounds || []
+        const roundIndex = rounds.indexOf(status)
+
+        // If status matches a round name, track round progression
+        if (roundIndex !== -1) {
+            // Mark previous round as Passed
+            if (application.roundHistory && application.roundHistory.length > 0) {
+                const lastEntry = application.roundHistory[application.roundHistory.length - 1]
+                if (lastEntry.status === 'In Progress') lastEntry.status = 'Passed'
+            }
+            application.roundHistory.push({ round: status, status: 'In Progress', date: Date.now() })
+            application.currentRound = roundIndex
+            application.status = status
+        } else if (status === 'Selected') {
+            if (application.roundHistory && application.roundHistory.length > 0) {
+                const lastEntry = application.roundHistory[application.roundHistory.length - 1]
+                if (lastEntry.status === 'In Progress') lastEntry.status = 'Passed'
+            }
+            application.status = 'Selected'
+            application.currentRound = rounds.length
+        } else if (status === 'Rejected') {
+            if (application.roundHistory && application.roundHistory.length > 0) {
+                const lastEntry = application.roundHistory[application.roundHistory.length - 1]
+                if (lastEntry.status === 'In Progress') lastEntry.status = 'Failed'
+            }
+            application.status = 'Rejected'
+        } else {
+            application.status = status
+        }
+
+        await application.save()
         res.json({ success: true, message: 'Status Changed' })
-
     } catch (error) {
-
         res.json({ success: false, message: error.message })
-
     }
 }
 
@@ -214,5 +250,42 @@ export const changeVisiblity = async (req, res) => {
 
     } catch (error) {
         res.json({ success: false, message: error.message })
+    }
+}
+
+// Delete Job
+export const deleteJob = async (req, res) => {
+    try {
+        const { id } = req.body
+        const companyId = req.company._id
+
+        const job = await Job.findById(id)
+
+        if (!job) {
+            return res.json({ success: false, message: 'Job not found' })
+        }
+
+        if (job.companyId.toString() !== companyId.toString()) {
+            return res.json({ success: false, message: 'Not authorized to delete this job' })
+        }
+
+        await Job.findByIdAndDelete(id)
+
+        await JobApplication.deleteMany({ jobId: id })
+
+        res.json({ success: true, message: 'Job deleted successfully' })
+
+    } catch (error) {
+        res.json({ success: false, message: error.message })
+    }
+}
+
+// Get All Groups for Company
+export const getCompanyGroups = async (req, res) => {
+    try {
+        const groups = await Group.find();
+        res.json({ success: true, groups });
+    } catch (error) {
+        res.json({ success: false, message: error.message });
     }
 }

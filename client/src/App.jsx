@@ -13,18 +13,27 @@ import 'quill/dist/quill.snow.css'
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+import Login from './pages/Login'
+import CoordinatorLogin from './pages/CoordinatorLogin'
+import CoordinatorDashboard from './pages/CoordinatorDashboard'
+import Profile from './pages/Profile'
+
 const App = () => {
 
-  const { showRecruiterLogin, companyToken } = useContext(AppContext)
+  const { companyToken } = useContext(AppContext)
 
   return (
     <div>
-      {showRecruiterLogin && <RecruiterLogin />}
       <ToastContainer />
       <Routes>
         <Route path='/' element={<Home />} />
+        <Route path='/login' element={<Login />} />
+        <Route path='/recruiter-login' element={<RecruiterLogin />} />
         <Route path='/apply-job/:id' element={<ApplyJob />} />
         <Route path='/applications' element={<Applications />} />
+        <Route path='/profile' element={<Profile />} />
+        <Route path='/coordinator-login' element={<CoordinatorLogin />} />
+        <Route path='/dashboard/coordinator' element={<CoordinatorDashboard />} />
         <Route path='/dashboard' element={<Dashboard />}>
           {
             companyToken ? <>

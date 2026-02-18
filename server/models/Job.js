@@ -9,7 +9,20 @@ const jobSchema = new mongoose.Schema({
     salary: { type: Number, required: true },
     date: { type: Number, required: true },
     visible: { type: Boolean, default: true },
-    companyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Company', required: true }
+    companyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Company', required: true },
+
+    // Job Description Details
+    roleDescription: { type: String },
+    requirements: { type: String },
+
+    // Visibility Constraints
+    minCGPA: { type: Number, default: 0 },
+    eligibleDepts: { type: [String], default: [] }, // Empty = All Departments
+    eligibleGroups: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Group' }], // Empty = No Group Restriction
+    targetBatch: { type: String }, // e.g. "2024", "2025"
+
+    // Recruitment Rounds (e.g. ["Aptitude", "Technical", "HR"])
+    rounds: { type: [String], default: [] }
 })
 
 const Job = mongoose.model('Job', jobSchema)

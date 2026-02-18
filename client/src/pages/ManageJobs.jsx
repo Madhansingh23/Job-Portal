@@ -58,6 +58,23 @@ const ManageJobs = () => {
 
   }
 
+  // Function to delete Job
+  const deleteJob = async (id) => {
+    try {
+      if (window.confirm("Are you sure you want to delete this job?")) {
+        const { data } = await axios.post(`${backendUrl}/api/company/delete-job`, { id }, { headers: { token: companyToken } })
+        if (data.success) {
+          toast.success(data.message)
+          fetchCompanyJobs()
+        } else {
+          toast.error(data.message)
+        }
+      }
+    } catch (error) {
+      toast.error(error.message)
+    }
+  }
+
   useEffect(() => {
     if (companyToken) {
       fetchCompanyJobs()
@@ -92,6 +109,9 @@ const ManageJobs = () => {
                 <td className='py-2 px-4 border-b text-center' >{job.applicants}</td>
                 <td className='py-2 px-4 border-b' >
                   <input onChange={() => changeJobVisiblity(job._id)} className='scale-125 ml-4' type="checkbox" checked={job.visible} />
+                </td>
+                <td className='py-2 px-4 border-b text-center cursor-pointer'>
+                  <button onClick={() => deleteJob(job._id)} className='text-red-500 hover:text-red-700 font-bold'>X</button>
                 </td>
               </tr>
             ))}

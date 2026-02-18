@@ -3,13 +3,18 @@
 import express from 'express'
 import cors from 'cors'
 import 'dotenv/config'
+import helmet from 'helmet'
+import rateLimit from 'express-rate-limit'
 import connectDB from './config/db.js'
-import { clerkWebhooks } from './controllers/webhooks.js'
 import companyRoutes from './routes/companyRoutes.js'
 import connectCloudinary from './config/cloudinary.js'
 import jobRoutes from './routes/jobRoutes.js'
 import userRoutes from './routes/userRoutes.js'
-import { clerkMiddleware } from '@clerk/express'
+import authRoutes from './routes/authRoutes.js'
+import groupRoutes from './routes/groupRoutes.js'
+import reportRoutes from './routes/reportRoutes.js'
+import coordinatorRoutes from './routes/coordinatorRoutes.js'
+import changeRequestRoutes from './routes/changeRequestRoutes.js'
 import User from './models/User.js'
 
 
@@ -56,22 +61,6 @@ const startServer = async () => {
 }
 
 startServer()
-// Sentry request handler disabled
-// app.use(Sentry.Handlers.requestHandler())
-// Test route to check MongoDB and Sentry integration (disabled duplicate)
-// app.get('/api/test-user/:id', async (req, res, next) => {
-//   try {
-//     const user = await User.findById(req.params.id)
-//     if (!user) {
-//       const err = new Error('User not found in MongoDB')
-//       err.status = 404
-//       throw err
-//     }
-//     res.json({ success: true, user })
-//   } catch (error) {
-//     next(error)
-//   }
-// })
 
 // Middlewares
 const allowedOrigins = [
@@ -121,18 +110,33 @@ app.use((req, res, next) => {
   if (req.method === 'OPTIONS') return next()
   next()
 })
-app.use(clerkMiddleware())
 
 // Routes
+// Security Middleware
+app.use(helmet())
+app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" })) // Allow images from Cloudinary
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP, please try again later.'
+})
+app.use('/api', limiter)
+
 app.get('/', (req, res) => res.send("API Working"))
 // Debug Sentry route disabled
 // app.get("/debug-sentry", function mainHandler(req, res) {
 //   throw new Error("My first Sentry error!");
 // });
-app.post('/webhooks', clerkWebhooks)
+// app.post('/webhooks', clerkWebhooks) // REMOVED
+app.use('/api/auth', authRoutes)
+app.use('/api/groups', groupRoutes)
+app.use('/api/reports', reportRoutes)
 app.use('/api/company', companyRoutes)
 app.use('/api/jobs', jobRoutes)
 app.use('/api/users', userRoutes)
+app.use('/api/coordinator', coordinatorRoutes) // Register Coordinator Routes
+app.use('/api/change-requests', changeRequestRoutes) // Student change requests
 
 // Sentry error handler disabled
 // app.use(Sentry.Handlers.errorHandler())

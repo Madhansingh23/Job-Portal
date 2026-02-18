@@ -1,0 +1,21 @@
+
+> client@0.0.0 build
+> vite build
+
+[36mvite v6.0.1 [32mbuilding for production...[36m[39m
+transforming...
+[32m✓[39m 21 modules transformed.
+[31mx[39m Build failed in 1.01s
+[31merror during build:
+[31m[vite]: Rollup failed to resolve import "@clerk/clerk-react" from "C:/Users/ASUS/Programs/Projects/Job-Portal/Job-Portal/client/src/pages/ApplyJob.jsx".
+This is most likely unintended because it can break your application at runtime.
+If you do want to externalize this module explicitly add it to
+`build.rollupOptions.external`[31m
+    at viteWarn (file:///C:/Users/ASUS/Programs/Projects/Job-Portal/Job-Portal/client/node_modules/vite/dist/node/chunks/dep-BcnkIxro.js:50714:17)
+    at onwarn (file:///C:/Users/ASUS/Programs/Projects/Job-Portal/Job-Portal/client/node_modules/@vitejs/plugin-react/dist/index.mjs:282:9)
+    at onRollupWarning (file:///C:/Users/ASUS/Programs/Projects/Job-Portal/Job-Portal/client/node_modules/vite/dist/node/chunks/dep-BcnkIxro.js:50744:5)
+    at onwarn (file:///C:/Users/ASUS/Programs/Projects/Job-Portal/Job-Portal/client/node_modules/vite/dist/node/chunks/dep-BcnkIxro.js:50413:7)
+    at file:///C:/Users/ASUS/Programs/Projects/Job-Portal/Job-Portal/client/node_modules/rollup/dist/es/shared/node-entry.js:19475:13
+    at Object.logger [as onLog] (file:///C:/Users/ASUS/Programs/Projects/Job-Portal/Job-Portal/client/node_modules/rollup/dist/es/shared/node-entry.js:21201:9)
+    at ModuleLoader.handleInvalidResolvedId (file:///C:/Users/ASUS/Programs/Projects/Job-Portal/Job-Portal/client/node_modules/rollup/dist/es/shared/node-entry.js:20090:26)
+    at file:///C:/Users/ASUS/Programs/Projects/Job-Portal/Job-Portal/client/node_modules/rollup/dist/es/shared/node-entry.js:20048:26[39m
