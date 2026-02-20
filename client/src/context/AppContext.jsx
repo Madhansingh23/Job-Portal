@@ -53,8 +53,8 @@ export const AppContextProvider = (props) => {
         try {
             let data;
             if (token) {
-                // Authenticated: get eligibility-filtered jobs
-                const response = await axios.post(`${backendUrl}/api/jobs/all`, {}, { headers: { token } })
+                // Authenticated: get all jobs with full details
+                const response = await axios.get(`${backendUrl}/api/jobs/all`, { headers: { token } })
                 data = response.data;
             } else {
                 // Public: get all visible jobs (no auth)

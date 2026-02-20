@@ -60,10 +60,19 @@ export const loginCompany = async (req, res) => {
 
     try {
 
+        if (!email || !password) {
+            return res.json({ success: false, message: 'Email and Password are required' })
+        }
+
         const company = await Company.findOne({ email })
 
-        if (await bcrypt.compare(password, company.password)) {
+        if (!company) {
+            return res.json({ success: false, message: 'Invalid email or password' })
+        }
 
+        const isMatch = await bcrypt.compare(password, company.password)
+
+        if (isMatch) {
             res.json({
                 success: true,
                 company: {
@@ -74,7 +83,6 @@ export const loginCompany = async (req, res) => {
                 },
                 token: generateToken(company._id)
             })
-
         }
         else {
             res.json({ success: false, message: 'Invalid email or password' })
@@ -245,10 +253,15 @@ export const changeVisiblity = async (req, res) => {
 
         const job = await Job.findById(id)
 
-        if (companyId.toString() === job.companyId.toString()) {
-            job.visible = !job.visible
+        if (!job) {
+            return res.json({ success: false, message: 'Job not found' })
         }
 
+        if (companyId.toString() !== job.companyId.toString()) {
+            return res.json({ success: false, message: 'Not authorized to modify this job' })
+        }
+
+        job.visible = !job.visible
         await job.save()
 
         res.json({ success: true, job })
@@ -288,12 +301,9 @@ export const deleteJob = async (req, res) => {
 // Get All Groups for Company
 export const getCompanyGroups = async (req, res) => {
     try {
-        const groups = await Group.find({ companyId: req.company._id }); // Filter by company ideally, or all if shared? 
-        // Original code was Group.find() which returns ALL groups. 
-        // Assuming groups are shared or checking schema...
-        // For now sticking to original logic but adding getCompanyStats below.
-        const allGroups = await Group.find();
-        res.json({ success: true, groups: allGroups });
+        // Groups are managed by coordinators and shared across the portal
+        const groups = await Group.find().populate('members', 'name registerNumber dept');
+        res.json({ success: true, groups });
     } catch (error) {
         res.json({ success: false, message: error.message });
     }

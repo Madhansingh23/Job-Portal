@@ -5,7 +5,11 @@ import User from "../models/User.js";
 export const createGroup = async (req, res) => {
     try {
         const { name, description } = req.body;
-        const coordinatorId = req.body.userId; // From auth middleware
+        const coordinatorId = req.userId;
+
+        if (!name) {
+            return res.json({ success: false, message: 'Group name is required' });
+        }
 
         const existingGroup = await Group.findOne({ name });
         if (existingGroup) {
@@ -28,7 +32,7 @@ export const createGroup = async (req, res) => {
 // Get All Groups
 export const getGroups = async (req, res) => {
     try {
-        const groups = await Group.find().populate('members', 'name email registerNumber');
+        const groups = await Group.find().populate('members', 'name email registerNumber dept');
         res.json({ success: true, groups });
     } catch (error) {
         res.json({ success: false, message: error.message });
@@ -45,7 +49,12 @@ export const addMemberToGroup = async (req, res) => {
             return res.json({ success: false, message: 'Group not found' });
         }
 
-        if (group.members.includes(studentId)) {
+        const student = await User.findById(studentId);
+        if (!student) {
+            return res.json({ success: false, message: 'Student not found' });
+        }
+
+        if (group.members.map(id => id.toString()).includes(studentId)) {
             return res.json({ success: false, message: 'Student already in group' });
         }
 
@@ -53,7 +62,7 @@ export const addMemberToGroup = async (req, res) => {
         await group.save();
 
         // Also update User model
-        await User.findByIdAndUpdate(studentId, { $push: { groups: groupId } });
+        await User.findByIdAndUpdate(studentId, { $addToSet: { groups: groupId } });
 
         res.json({ success: true, message: 'Student added to group' });
 

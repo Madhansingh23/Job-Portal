@@ -32,11 +32,18 @@ const Profile = () => {
     const [twelfthMarks, setTwelfthMarks] = useState('')
     const [numberOfArrears, setNumberOfArrears] = useState('')
 
+    // Change Request State
+    const [changeRequestField, setChangeRequestField] = useState('')
+    const [changeRequestValue, setChangeRequestValue] = useState('')
+    const [changeRequestReason, setChangeRequestReason] = useState('')
+    const [showChangeRequestModal, setShowChangeRequestModal] = useState(false)
+    const [myChangeRequests, setMyChangeRequests] = useState([])
+    const [showRequestsPanel, setShowRequestsPanel] = useState(false)
 
     useEffect(() => {
         if (userData) {
-            setFirstName(userData.firstName || userData.name.split(' ')[0] || '')
-            setLastName(userData.lastName || userData.name.split(' ')[1] || '')
+            setFirstName(userData.firstName || userData.name?.split(' ')[0] || '')
+            setLastName(userData.lastName || userData.name?.split(' ')[1] || '')
             setPhone(userData.phone || '')
             setGender(userData.gender || 'Male')
             setCurrentLocation(userData.currentLocation || '')
@@ -53,14 +60,27 @@ const Profile = () => {
         }
     }, [userData])
 
-    // Update Profile Function
+    // Fetch my change requests
+    const fetchMyChangeRequests = async () => {
+        try {
+            const { data } = await axios.get(`${backendUrl}/api/change-requests/my-requests`, { headers: { token } })
+            if (data.success) setMyChangeRequests(data.requests)
+        } catch (err) {
+            console.error(err)
+        }
+    }
+
+    useEffect(() => {
+        if (token) fetchMyChangeRequests()
+    }, [token])
+
+    // Update Profile Function (personal details only - NOT academic)
     const updateProfile = async () => {
         try {
             const { data } = await axios.post(backendUrl + '/api/users/update-profile',
                 {
                     firstName, lastName, phone, gender, currentLocation, preferredLocation,
-                    registerNumber, dept, cgpa, batch, branch,
-                    tenthMarks, twelfthMarks, numberOfArrears
+                    registerNumber, dept, batch, branch
                 },
                 { headers: { token } }
             )
@@ -100,7 +120,7 @@ const Profile = () => {
         }
     }
 
-    // Update Resume Function (Direct Upload from Form)
+    // Update Resume Function
     const updateResume = async () => {
         if (!resume) return;
         try {
@@ -117,6 +137,47 @@ const Profile = () => {
         } catch (err) {
             toast.error(err.message)
         }
+    }
+
+    // Submit Change Request (for CGPA, 10th, 12th, Arrears)
+    const submitChangeRequest = async () => {
+        if (!changeRequestValue || !changeRequestReason) {
+            return toast.error('Please fill all fields')
+        }
+        try {
+            const { data } = await axios.post(`${backendUrl}/api/change-requests/create`,
+                { fieldName: changeRequestField, requestedValue: changeRequestValue, reason: changeRequestReason },
+                { headers: { token } }
+            )
+            if (data.success) {
+                toast.success('Change request submitted to coordinator')
+                setShowChangeRequestModal(false)
+                setChangeRequestField('')
+                setChangeRequestValue('')
+                setChangeRequestReason('')
+                fetchMyChangeRequests()
+            } else {
+                toast.error(data.message)
+            }
+        } catch (err) {
+            toast.error(err.message)
+        }
+    }
+
+    // Open change request modal for a specific field
+    const openChangeRequest = (field, label) => {
+        setChangeRequestField(field)
+        setChangeRequestValue('')
+        setChangeRequestReason('')
+        setShowChangeRequestModal(true)
+    }
+
+    // Field label mapping
+    const fieldLabels = {
+        cgpa: 'CGPA',
+        tenthMarks: '10th Marks (%)',
+        twelfthMarks: '12th Marks (%)',
+        numberOfArrears: 'Number of Arrears'
     }
 
 
@@ -165,7 +226,10 @@ const Profile = () => {
                                     </div>
                                 </div>
 
-                                <div className='mb-2'>
+                                <div className='mb-2 flex gap-2'>
+                                    <button onClick={() => { setShowRequestsPanel(!showRequestsPanel) }} className='text-sm font-medium text-slate-600 dark:text-slate-300 px-4 py-2 rounded-full border border-slate-200 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 transition'>
+                                        📋 My Requests {myChangeRequests.length > 0 && `(${myChangeRequests.length})`}
+                                    </button>
                                     {isEdit ? (
                                         <div className='flex gap-2 shadow-sm rounded-full bg-white dark:bg-slate-700 p-1 border dark:border-slate-600'>
                                             <button onClick={updateProfile} className='bg-black dark:bg-slate-900 text-white px-6 py-2 rounded-full text-sm font-medium hover:scale-105 transition shadow-lg'>Save</button>
@@ -179,6 +243,35 @@ const Profile = () => {
                                     )}
                                 </div>
                             </div>
+
+                            {/* Change Request History Panel */}
+                            {showRequestsPanel && (
+                                <div className='mb-8 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-6 animate-fade-in'>
+                                    <h3 className='text-lg font-bold text-slate-800 dark:text-white mb-4'>📋 My Change Requests</h3>
+                                    {myChangeRequests.length === 0 ? (
+                                        <p className='text-sm text-slate-400'>No change requests submitted yet.</p>
+                                    ) : (
+                                        <div className='space-y-3'>
+                                            {myChangeRequests.map((req, idx) => (
+                                                <div key={idx} className='flex items-center justify-between bg-white dark:bg-slate-800 p-4 rounded-lg border border-slate-100 dark:border-slate-700'>
+                                                    <div>
+                                                        <p className='font-medium text-sm text-slate-700 dark:text-white'>
+                                                            {fieldLabels[req.fieldName] || req.fieldName}: <span className='text-slate-400'>{req.currentValue}</span> → <span className='text-blue-600 dark:text-blue-400 font-bold'>{req.requestedValue}</span>
+                                                        </p>
+                                                        <p className='text-xs text-slate-400 mt-1'>Reason: {req.reason}</p>
+                                                    </div>
+                                                    <span className={`text-xs font-bold px-3 py-1 rounded-full ${req.status === 'Approved' ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400' :
+                                                        req.status === 'Rejected' ? 'bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400' :
+                                                            'bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400'
+                                                        }`}>
+                                                        {req.status}
+                                                    </span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
 
                             {/* Main Grid */}
                             <div className='grid grid-cols-1 lg:grid-cols-3 gap-8'>
@@ -263,13 +356,15 @@ const Profile = () => {
                                         </div>
                                     </section>
 
-                                    {/* Academic Details - Editable! */}
+                                    {/* Academic Details — Read-only, with Change Request buttons */}
                                     <section>
                                         <h3 className='text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2'>
                                             <span className='w-1 h-6 bg-green-600 rounded-full'></span>
                                             Academic Details
                                         </h3>
                                         <div className='flex flex-col gap-4 bg-gray-50/50 dark:bg-slate-800/30 p-6 rounded-xl border border-gray-100 dark:border-slate-700'>
+
+                                            {/* Register Number & Dept (editable by student) */}
                                             <div>
                                                 <label className='text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide block mb-1'>Register Number</label>
                                                 <input type="text" value={registerNumber} onChange={e => setRegisterNumber(e.target.value)} disabled={!isEdit} className={`w-full p-2 rounded-lg border ${isEdit ? 'bg-white dark:bg-slate-700 border-blue-200 dark:border-slate-600' : 'bg-transparent border-transparent text-gray-800 dark:text-white font-medium'} outline-none transition`} placeholder='Reg. No' />
@@ -278,51 +373,82 @@ const Profile = () => {
                                                 <label className='text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide block mb-1'>Department</label>
                                                 <input type="text" value={dept} onChange={e => setDept(e.target.value)} disabled={!isEdit} className={`w-full p-2 rounded-lg border ${isEdit ? 'bg-white dark:bg-slate-700 border-blue-200 dark:border-slate-600' : 'bg-transparent border-transparent text-gray-800 dark:text-white font-medium'} outline-none transition`} placeholder='e.g. CSE' />
                                             </div>
-                                            <div className='flex gap-4'>
-                                                <div className='flex-1'>
-                                                    <div className='flex items-center gap-2 mb-1'>
+
+                                            {/* CGPA — Read-only, requires coordinator approval */}
+                                            <div>
+                                                <div className='flex items-center justify-between mb-1'>
+                                                    <div className='flex items-center gap-2'>
                                                         <label className='text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide'>CGPA</label>
-                                                        {!isEdit && (userData.verifiedFields?.cgpa ? <span className='text-[10px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/30 px-1.5 py-0.5 rounded-full'>✓ Verified</span> : <span className='text-[10px] font-bold text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded-full'>⚠ Pending</span>)}
+                                                        {userData.verifiedFields?.cgpa
+                                                            ? <span className='text-[10px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/30 px-1.5 py-0.5 rounded-full'>✓ Verified</span>
+                                                            : <span className='text-[10px] font-bold text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded-full'>⚠ Pending</span>
+                                                        }
                                                     </div>
-                                                    <input type="number" step="0.01" min="0" max="10" value={cgpa} onChange={e => setCgpa(e.target.value)} disabled={!isEdit} className={`w-full p-2 rounded-lg border ${isEdit ? 'bg-white dark:bg-slate-700 border-blue-200 dark:border-slate-600' : `bg-transparent border-transparent ${userData.verifiedFields?.cgpa ? 'text-blue-600 dark:text-blue-400' : 'text-gray-800 dark:text-white'} font-bold`} outline-none transition`} placeholder='0.0' />
+                                                    <button onClick={() => openChangeRequest('cgpa', 'CGPA')} className='text-[10px] font-bold text-blue-600 hover:text-blue-800 dark:text-blue-400 hover:underline transition'>
+                                                        ✏️ Request Update
+                                                    </button>
                                                 </div>
+                                                <input type="number" step="0.01" min="0" max="10" value={cgpa} disabled className={`w-full p-2 rounded-lg border bg-transparent border-transparent ${userData.verifiedFields?.cgpa ? 'text-blue-600 dark:text-blue-400' : 'text-gray-800 dark:text-white'} font-bold outline-none`} placeholder='0.0' />
+                                            </div>
+
+                                            {/* Batch & Branch (editable) */}
+                                            <div className='flex gap-4'>
                                                 <div className='flex-1'>
                                                     <div className='flex items-center gap-2 mb-1'>
                                                         <label className='text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide'>Batch</label>
-                                                        {!isEdit && (userData.verifiedFields?.batch ? <span className='text-[10px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/30 px-1.5 py-0.5 rounded-full'>✓ Verified</span> : <span className='text-[10px] font-bold text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded-full'>⚠ Pending</span>)}
+                                                        {userData.verifiedFields?.batch ? <span className='text-[10px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/30 px-1.5 py-0.5 rounded-full'>✓ Verified</span> : <span className='text-[10px] font-bold text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded-full'>⚠ Pending</span>}
                                                     </div>
                                                     <input type="text" value={batch} onChange={e => setBatch(e.target.value)} disabled={!isEdit} className={`w-full p-2 rounded-lg border ${isEdit ? 'bg-white dark:bg-slate-700 border-blue-200 dark:border-slate-600' : `bg-transparent border-transparent ${userData.verifiedFields?.batch ? 'text-blue-600 dark:text-blue-400' : 'text-gray-800 dark:text-white'} font-medium`} outline-none transition`} placeholder='e.g. 2026' />
                                                 </div>
-                                            </div>
-                                            <div>
-                                                <div className='flex items-center gap-2 mb-1'>
-                                                    <label className='text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide'>Branch</label>
-                                                    {!isEdit && (userData.verifiedFields?.branch ? <span className='text-[10px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/30 px-1.5 py-0.5 rounded-full'>✓ Verified</span> : <span className='text-[10px] font-bold text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded-full'>⚠ Pending</span>)}
+                                                <div className='flex-1'>
+                                                    <div className='flex items-center gap-2 mb-1'>
+                                                        <label className='text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide'>Branch</label>
+                                                        {userData.verifiedFields?.branch ? <span className='text-[10px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/30 px-1.5 py-0.5 rounded-full'>✓ Verified</span> : <span className='text-[10px] font-bold text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded-full'>⚠ Pending</span>}
+                                                    </div>
+                                                    <input type="text" value={branch} onChange={e => setBranch(e.target.value)} disabled={!isEdit} className={`w-full p-2 rounded-lg border ${isEdit ? 'bg-white dark:bg-slate-700 border-blue-200 dark:border-slate-600' : `bg-transparent border-transparent ${userData.verifiedFields?.branch ? 'text-blue-600 dark:text-blue-400' : 'text-gray-800 dark:text-white'} font-medium`} outline-none transition`} placeholder='e.g. B.Tech' />
                                                 </div>
-                                                <input type="text" value={branch} onChange={e => setBranch(e.target.value)} disabled={!isEdit} className={`w-full p-2 rounded-lg border ${isEdit ? 'bg-white dark:bg-slate-700 border-blue-200 dark:border-slate-600' : `bg-transparent border-transparent ${userData.verifiedFields?.branch ? 'text-blue-600 dark:text-blue-400' : 'text-gray-800 dark:text-white'} font-medium`} outline-none transition`} placeholder='e.g. B.Tech' />
                                             </div>
+
+                                            {/* 10th, 12th Marks — Read-only, requires coordinator approval */}
                                             <div className='flex gap-4'>
                                                 <div className='flex-1'>
-                                                    <div className='flex items-center gap-2 mb-1'>
-                                                        <label className='text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide'>10th Marks (%)</label>
-                                                        {!isEdit && (userData.verifiedFields?.tenthMarks ? <span className='text-[10px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/30 px-1.5 py-0.5 rounded-full'>✓ Verified</span> : <span className='text-[10px] font-bold text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded-full'>⚠ Pending</span>)}
+                                                    <div className='flex items-center justify-between mb-1'>
+                                                        <div className='flex items-center gap-2'>
+                                                            <label className='text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide'>10th (%)</label>
+                                                            {userData.verifiedFields?.tenthMarks ? <span className='text-[10px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/30 px-1.5 py-0.5 rounded-full'>✓</span> : <span className='text-[10px] font-bold text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded-full'>⚠</span>}
+                                                        </div>
+                                                        <button onClick={() => openChangeRequest('tenthMarks', '10th Marks')} className='text-[10px] font-bold text-blue-600 hover:text-blue-800 dark:text-blue-400 hover:underline'>✏️</button>
                                                     </div>
-                                                    <input type="number" step="0.01" min="0" max="100" value={tenthMarks} onChange={e => setTenthMarks(e.target.value)} disabled={!isEdit} className={`w-full p-2 rounded-lg border ${isEdit ? 'bg-white dark:bg-slate-700 border-blue-200 dark:border-slate-600' : `bg-transparent border-transparent ${userData.verifiedFields?.tenthMarks ? 'text-blue-600 dark:text-blue-400' : 'text-gray-800 dark:text-white'} font-bold`} outline-none transition`} placeholder='e.g. 85.5' />
+                                                    <input type="number" step="0.01" min="0" max="100" value={tenthMarks} disabled className={`w-full p-2 rounded-lg border bg-transparent border-transparent ${userData.verifiedFields?.tenthMarks ? 'text-blue-600 dark:text-blue-400' : 'text-gray-800 dark:text-white'} font-bold outline-none`} placeholder='e.g. 85.5' />
                                                 </div>
                                                 <div className='flex-1'>
-                                                    <div className='flex items-center gap-2 mb-1'>
-                                                        <label className='text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide'>12th Marks (%)</label>
-                                                        {!isEdit && (userData.verifiedFields?.twelfthMarks ? <span className='text-[10px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/30 px-1.5 py-0.5 rounded-full'>✓ Verified</span> : <span className='text-[10px] font-bold text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded-full'>⚠ Pending</span>)}
+                                                    <div className='flex items-center justify-between mb-1'>
+                                                        <div className='flex items-center gap-2'>
+                                                            <label className='text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide'>12th (%)</label>
+                                                            {userData.verifiedFields?.twelfthMarks ? <span className='text-[10px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/30 px-1.5 py-0.5 rounded-full'>✓</span> : <span className='text-[10px] font-bold text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded-full'>⚠</span>}
+                                                        </div>
+                                                        <button onClick={() => openChangeRequest('twelfthMarks', '12th Marks')} className='text-[10px] font-bold text-blue-600 hover:text-blue-800 dark:text-blue-400 hover:underline'>✏️</button>
                                                     </div>
-                                                    <input type="number" step="0.01" min="0" max="100" value={twelfthMarks} onChange={e => setTwelfthMarks(e.target.value)} disabled={!isEdit} className={`w-full p-2 rounded-lg border ${isEdit ? 'bg-white dark:bg-slate-700 border-blue-200 dark:border-slate-600' : `bg-transparent border-transparent ${userData.verifiedFields?.twelfthMarks ? 'text-blue-600 dark:text-blue-400' : 'text-gray-800 dark:text-white'} font-bold`} outline-none transition`} placeholder='e.g. 90.0' />
+                                                    <input type="number" step="0.01" min="0" max="100" value={twelfthMarks} disabled className={`w-full p-2 rounded-lg border bg-transparent border-transparent ${userData.verifiedFields?.twelfthMarks ? 'text-blue-600 dark:text-blue-400' : 'text-gray-800 dark:text-white'} font-bold outline-none`} placeholder='e.g. 90.0' />
                                                 </div>
                                             </div>
+
+                                            {/* Arrears — Read-only, requires coordinator approval */}
                                             <div>
-                                                <div className='flex items-center gap-2 mb-1'>
-                                                    <label className='text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide'>Number of Arrears</label>
-                                                    {!isEdit && (userData.verifiedFields?.numberOfArrears ? <span className='text-[10px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/30 px-1.5 py-0.5 rounded-full'>✓ Verified</span> : <span className='text-[10px] font-bold text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded-full'>⚠ Pending</span>)}
+                                                <div className='flex items-center justify-between mb-1'>
+                                                    <div className='flex items-center gap-2'>
+                                                        <label className='text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide'>Number of Arrears</label>
+                                                        {userData.verifiedFields?.numberOfArrears ? <span className='text-[10px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/30 px-1.5 py-0.5 rounded-full'>✓ Verified</span> : <span className='text-[10px] font-bold text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded-full'>⚠ Pending</span>}
+                                                    </div>
+                                                    <button onClick={() => openChangeRequest('numberOfArrears', 'Number of Arrears')} className='text-[10px] font-bold text-blue-600 hover:text-blue-800 dark:text-blue-400 hover:underline'>✏️ Request</button>
                                                 </div>
-                                                <input type="number" min="0" value={numberOfArrears} onChange={e => setNumberOfArrears(e.target.value)} disabled={!isEdit} className={`w-full p-2 rounded-lg border ${isEdit ? 'bg-white dark:bg-slate-700 border-blue-200 dark:border-slate-600' : `bg-transparent border-transparent ${userData.verifiedFields?.numberOfArrears ? 'text-blue-600 dark:text-blue-400' : 'text-gray-800 dark:text-white'} font-bold`} outline-none transition`} placeholder='0' />
+                                                <input type="number" min="0" value={numberOfArrears} disabled className={`w-full p-2 rounded-lg border bg-transparent border-transparent ${userData.verifiedFields?.numberOfArrears ? 'text-blue-600 dark:text-blue-400' : 'text-gray-800 dark:text-white'} font-bold outline-none`} placeholder='0' />
+                                            </div>
+
+                                            <div className='bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 rounded-lg p-3 mt-2'>
+                                                <p className='text-xs text-amber-700 dark:text-amber-400'>
+                                                    <strong>📌 Note:</strong> CGPA, 10th/12th marks, and arrears require coordinator approval to update. Use the <strong>"Request Update"</strong> button to submit a change request.
+                                                </p>
                                             </div>
                                         </div>
                                     </section>
@@ -334,6 +460,49 @@ const Profile = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Change Request Modal */}
+            {showChangeRequestModal && (
+                <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in'>
+                    <div className='bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 border dark:border-slate-700'>
+                        <h3 className='text-xl font-bold text-slate-800 dark:text-white mb-2'>Request {fieldLabels[changeRequestField]} Update</h3>
+                        <p className='text-sm text-slate-500 dark:text-slate-400 mb-6'>This request will be sent to the placement coordinator for approval.</p>
+
+                        <div className='space-y-4'>
+                            <div>
+                                <label className='text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase block mb-1'>Current Value</label>
+                                <input type="text" value={userData[changeRequestField] ?? 'Not set'} disabled className='w-full p-2.5 rounded-lg border bg-slate-50 dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 outline-none' />
+                            </div>
+                            <div>
+                                <label className='text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase block mb-1'>New Requested Value</label>
+                                <input
+                                    type={changeRequestField === 'numberOfArrears' ? 'number' : 'text'}
+                                    value={changeRequestValue}
+                                    onChange={e => setChangeRequestValue(e.target.value)}
+                                    className='w-full p-2.5 rounded-lg border bg-white dark:bg-slate-700 border-blue-200 dark:border-slate-600 text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-100'
+                                    placeholder={`Enter new ${fieldLabels[changeRequestField]}`}
+                                    autoFocus
+                                />
+                            </div>
+                            <div>
+                                <label className='text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase block mb-1'>Reason for Change</label>
+                                <textarea
+                                    value={changeRequestReason}
+                                    onChange={e => setChangeRequestReason(e.target.value)}
+                                    className='w-full p-2.5 rounded-lg border bg-white dark:bg-slate-700 border-blue-200 dark:border-slate-600 text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-100 min-h-[80px] resize-none'
+                                    placeholder='e.g. Updated CGPA after semester results'
+                                />
+                            </div>
+                        </div>
+
+                        <div className='flex gap-3 mt-6'>
+                            <button onClick={() => setShowChangeRequestModal(false)} className='flex-1 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium transition'>Cancel</button>
+                            <button onClick={submitChangeRequest} className='flex-1 py-2.5 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition shadow-lg shadow-blue-200 dark:shadow-none'>Submit Request</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <Footer />
         </div>
     ) : null

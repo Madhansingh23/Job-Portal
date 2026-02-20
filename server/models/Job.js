@@ -29,6 +29,10 @@ const jobSchema = new mongoose.Schema({
     rounds: { type: [String], default: [] }
 })
 
+// Indexes for fast queries
+jobSchema.index({ visible: 1, companyId: 1 })
+jobSchema.index({ companyId: 1 })
+
 const Job = mongoose.model('Job', jobSchema)
 
 export default Job

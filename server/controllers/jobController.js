@@ -1,57 +1,48 @@
 import Job from "../models/Job.js"
-import User from "../models/User.js"
 
 
-// Get All Jobs
+// Get All Jobs (Authenticated - returns all visible jobs)
 export const getJobs = async (req, res) => {
     try {
-        // Fetch all visible jobs
         const jobs = await Job.find({ visible: true })
-            .populate({ path: 'companyId', select: '-password' })
+            .populate('companyId', 'name email image')
+            .select('-__v')
+            .sort({ date: -1 })
+            .lean()
 
         res.json({ success: true, jobs })
-
     } catch (error) {
         res.json({ success: false, message: error.message })
     }
 }
 
-// Get Single Job Using JobID
-export const getJobById = async (req, res) => {
-    try {
-
-        const { id } = req.params
-
-        const job = await Job.findById(id)
-            .populate({
-                path: 'companyId',
-                select: '-password'
-            })
-
-        if (!job) {
-            return res.json({
-                success: false,
-                message: 'Job not found'
-            })
-        }
-
-        res.json({
-            success: true,
-            job
-        })
-
-    } catch (error) {
-        res.json({ success: false, message: error.message })
-    }
-}
-
-// Get All Jobs Publicly (No Auth Required)
+// Get Public Jobs (No Auth - for homepage/browse)
 export const getPublicJobs = async (req, res) => {
     try {
         const jobs = await Job.find({ visible: true })
-            .populate({ path: 'companyId', select: '-password' })
+            .populate('companyId', 'name email image')
+            .select('title description location category level salary companyId date offerType minCGPA targetBatch eligibleDepts')
+            .sort({ date: -1 })
+            .lean()
 
         res.json({ success: true, jobs })
+    } catch (error) {
+        res.json({ success: false, message: error.message })
+    }
+}
+
+// Get Single Job by ID
+export const getJobById = async (req, res) => {
+    try {
+        const { id } = req.params
+        const job = await Job.findById(id)
+            .populate('companyId', 'name email image')
+            .lean()
+
+        if (!job) {
+            return res.json({ success: false, message: 'Job not found' })
+        }
+        res.json({ success: true, job })
     } catch (error) {
         res.json({ success: false, message: error.message })
     }

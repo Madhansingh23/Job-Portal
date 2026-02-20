@@ -114,7 +114,7 @@ export const verifyStudentField = async (req, res) => {
     try {
         const { userId, field, verified } = req.body;
 
-        const allowedFields = ['cgpa', 'batch', 'branch'];
+        const allowedFields = ['cgpa', 'batch', 'branch', 'tenthMarks', 'twelfthMarks', 'numberOfArrears'];
         if (!allowedFields.includes(field)) {
             return res.json({ success: false, message: "Invalid field" });
         }

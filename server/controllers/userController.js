@@ -6,7 +6,7 @@ import { v2 as cloudinary } from "cloudinary"
 // Get User Data
 export const getUserData = async (req, res) => {
 
-    const userId = req.body.userId
+    const userId = req.userId
 
     try {
 
@@ -29,8 +29,7 @@ export const getUserData = async (req, res) => {
 export const applyForJob = async (req, res) => {
 
     const { jobId } = req.body
-
-    const userId = req.body.userId
+    const userId = req.userId
 
     try {
 
@@ -52,25 +51,54 @@ export const applyForJob = async (req, res) => {
             return res.json({ success: false, message: 'User Not Found' })
         }
 
-        // Double check eligibility (Security)
-        if (user.cgpa < jobData.minCGPA) {
-            return res.json({ success: false, message: 'Your CGPA is not enough for this job' })
+        // === ELIGIBILITY CHECKS (Security Gate) ===
+
+        // 1. CGPA Check
+        if (jobData.minCGPA > 0 && (user.cgpa || 0) < jobData.minCGPA) {
+            return res.json({ success: false, message: `Minimum CGPA required: ${jobData.minCGPA}` })
         }
+
+        // 2. 10th Marks Check
         if (jobData.minTenthMarks > 0 && (user.tenthMarks || 0) < jobData.minTenthMarks) {
             return res.json({ success: false, message: `Minimum 10th Marks required: ${jobData.minTenthMarks}%` })
         }
+
+        // 3. 12th Marks Check
         if (jobData.minTwelfthMarks > 0 && (user.twelfthMarks || 0) < jobData.minTwelfthMarks) {
             return res.json({ success: false, message: `Minimum 12th Marks required: ${jobData.minTwelfthMarks}%` })
         }
-        if (jobData.maxArrears !== undefined && (user.numberOfArrears || 0) > jobData.maxArrears) {
+
+        // 4. Arrears Check
+        if (jobData.maxArrears !== undefined && jobData.maxArrears < 100 && (user.numberOfArrears || 0) > jobData.maxArrears) {
             return res.json({ success: false, message: `Maximum Arrears allowed: ${jobData.maxArrears}` })
         }
 
+        // 5. Department Check
+        if (jobData.eligibleDepts && jobData.eligibleDepts.length > 0) {
+            if (!user.dept || !jobData.eligibleDepts.includes(user.dept)) {
+                return res.json({ success: false, message: `This job is only open to: ${jobData.eligibleDepts.join(', ')}` })
+            }
+        }
+
+        // 6. Batch Check
+        if (jobData.targetBatch && jobData.targetBatch !== user.batch) {
+            return res.json({ success: false, message: `This job is only for batch: ${jobData.targetBatch}` })
+        }
+
+        // 7. Group Check
+        if (jobData.eligibleGroups && jobData.eligibleGroups.length > 0) {
+            const userGroupIds = (user.groups || []).map(g => g.toString())
+            const jobGroupIds = jobData.eligibleGroups.map(g => g.toString())
+            const hasMatchingGroup = jobGroupIds.some(gid => userGroupIds.includes(gid))
+            if (!hasMatchingGroup) {
+                return res.json({ success: false, message: 'You are not in an eligible group for this job' })
+            }
+        }
+
+        // 8. Resume Check
         if (!user.resume) {
             return res.json({ success: false, message: 'Please upload your resume before applying' })
         }
-
-        // Add more checks here if needed (Groups, Dept)
 
         await JobApplication.create({
             companyId: jobData.companyId,
@@ -79,9 +107,6 @@ export const applyForJob = async (req, res) => {
             date: Date.now(),
             status: 'Applied'
         })
-
-        // Update user's jobsApplied
-        // await User.findByIdAndUpdate(userId, { $push: { jobsApplied: ... } }) 
 
         res.json({ success: true, message: 'Applied Successfully' })
 
@@ -96,7 +121,7 @@ export const getUserJobApplications = async (req, res) => {
 
     try {
 
-        const userId = req.body.userId
+        const userId = req.userId
 
         const applications = await JobApplication.find({ userId })
             .populate('companyId', 'name email image')
@@ -115,15 +140,19 @@ export const getUserJobApplications = async (req, res) => {
 
 }
 
-// Update User Profile (Student allowed fields)
+// Update User Resume
 export const updateUserResume = async (req, res) => {
     try {
 
-        const userId = req.body.userId
+        const userId = req.userId
 
         const resumeFile = req.file
 
         const userData = await User.findById(userId)
+
+        if (!userData) {
+            return res.json({ success: false, message: 'User not found' })
+        }
 
         if (resumeFile) {
             const resumeUpload = await cloudinary.uploader.upload(resumeFile.path)
@@ -144,10 +173,14 @@ export const updateUserResume = async (req, res) => {
 // Update User Image
 export const updateUserImage = async (req, res) => {
     try {
-        const userId = req.body.userId
+        const userId = req.userId
         const imageFile = req.file
 
         const userData = await User.findById(userId)
+
+        if (!userData) {
+            return res.json({ success: false, message: 'User not found' })
+        }
 
         if (imageFile) {
             const imageUpload = await cloudinary.uploader.upload(imageFile.path)
@@ -167,7 +200,7 @@ export const updateUserImage = async (req, res) => {
 export const withdrawApplication = async (req, res) => {
     try {
         const { applicationId } = req.body
-        const userId = req.body.userId
+        const userId = req.userId
 
         const application = await JobApplication.findOne({ _id: applicationId, userId })
 
@@ -189,10 +222,10 @@ export const withdrawApplication = async (req, res) => {
 }
 
 // Update User Profile (General - Student)
-// Update User Profile (General - Student)
 export const updateUserProfile = async (req, res) => {
     try {
-        const { userId, firstName, lastName, phone, currentLocation, preferredLocation, gender, cgpa, dept, registerNumber, batch, branch, groups, tenthMarks, twelfthMarks, numberOfArrears } = req.body
+        const userId = req.userId
+        const { firstName, lastName, phone, currentLocation, preferredLocation, gender, dept, registerNumber, batch, branch, groups } = req.body
 
         const user = await User.findById(userId)
         if (!user) return res.json({ success: false, message: 'User not found' })
@@ -204,28 +237,19 @@ export const updateUserProfile = async (req, res) => {
         if (preferredLocation) user.preferredLocation = preferredLocation
         if (gender) user.gender = gender
 
-        // Academic Details (Allowing updates for now to ensure students can complete profile)
-        if (cgpa) user.cgpa = cgpa
+        // Basic academic (non-protected fields)
         if (dept) user.dept = dept
         if (registerNumber) user.registerNumber = registerNumber
         if (batch) user.batch = batch
         if (branch) user.branch = branch
 
-        // New Academic Fields
-        if (tenthMarks !== undefined) {
-            if (tenthMarks < 0 || tenthMarks > 100) return res.json({ success: false, message: '10th Marks must be between 0 and 100' })
-            user.tenthMarks = tenthMarks
-        }
-        if (twelfthMarks !== undefined) {
-            if (twelfthMarks < 0 || twelfthMarks > 100) return res.json({ success: false, message: '12th Marks must be between 0 and 100' })
-            user.twelfthMarks = twelfthMarks
-        }
-        if (numberOfArrears !== undefined) user.numberOfArrears = numberOfArrears
+        // NOTE: cgpa, tenthMarks, twelfthMarks, numberOfArrears are PROTECTED.
+        // Students must submit a Change Request to the coordinator to update these.
+        // Direct updates are blocked here for data integrity.
 
-        // Note: Groups usually managed by admin/coordinator but allowing if passed for flexibility (or create separate endpoint)
         if (groups) user.groups = groups
 
-        // Only update name if first/last name provided
+        // Update display name
         if (firstName || lastName) {
             user.name = (firstName || user.firstName || "") + " " + (lastName || user.lastName || "")
         }
@@ -244,7 +268,6 @@ export const adminUpdateUserProfile = async (req, res) => {
     try {
         const { adminPassword, targetUserId, cgpa, username, name, registerNumber, dept, branch, batch, isProfileLocked } = req.body
 
-        // Simple Admin Password Check (In production, use roles/env)
         if (adminPassword !== process.env.ADMIN_PASSWORD) {
             return res.json({ success: false, message: 'Invalid Admin Password' })
         }
@@ -279,7 +302,7 @@ export const adminUpdateUserProfile = async (req, res) => {
 export const respondToOffer = async (req, res) => {
     try {
         const { applicationId, status } = req.body
-        const userId = req.body.userId
+        const userId = req.userId
 
         if (!['Accepted', 'Rejected'].includes(status)) {
             return res.json({ success: false, message: 'Invalid status' })

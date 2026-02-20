@@ -19,6 +19,12 @@ const JobApplicationSchema = new mongoose.Schema({
     date: { type: Number, required: true }
 })
 
+// Indexes for fast queries
+JobApplicationSchema.index({ userId: 1, jobId: 1 })
+JobApplicationSchema.index({ companyId: 1 })
+JobApplicationSchema.index({ userId: 1 })
+JobApplicationSchema.index({ status: 1 })
+
 const JobApplication = mongoose.model('JobApplication', JobApplicationSchema)
 
 export default JobApplication

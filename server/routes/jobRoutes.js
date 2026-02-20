@@ -4,8 +4,8 @@ import authUser from '../middleware/auth.js';
 
 const router = express.Router()
 
-// Route to get all jobs data (authenticated - with eligibility filtering)
-router.post('/all', authUser, getJobs)
+// Route to get all jobs data (authenticated)
+router.get('/all', authUser, getJobs)
 
 // Route to get all jobs publicly (no auth required - for home page)
 router.get('/public', getPublicJobs)

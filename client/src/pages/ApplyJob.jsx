@@ -4,12 +4,20 @@ import { AppContext } from '../context/AppContext'
 import Loading from '../components/Loading'
 import Navbar from '../components/Navbar'
 import { assets } from '../assets/assets'
-import kconvert from 'k-convert';
 import moment from 'moment';
 import JobCard from '../components/JobCard'
 import Footer from '../components/Footer'
 import axios from 'axios'
 import { toast } from 'react-toastify'
+
+// Format salary to LPA (Indian standard)
+const formatSalary = (salary) => {
+  if (!salary || salary <= 0) return 'Not Disclosed'
+  if (salary >= 10000000) return `${(salary / 10000000).toFixed(1)} Cr/yr`
+  if (salary >= 100000) return `${(salary / 100000).toFixed(1)} LPA`
+  if (salary >= 1000) return `₹${(salary / 1000).toFixed(0)}K/yr`
+  return `₹${salary}/yr`
+}
 
 const ApplyJob = () => {
 
@@ -93,7 +101,7 @@ const ApplyJob = () => {
                   <span className='flex items-center gap-1.5'><img src={assets.suitcase_icon} className='w-4 opacity-60' alt="" /> {JobData.companyId.name}</span>
                   <span className='flex items-center gap-1.5'><img src={assets.location_icon} className='w-4 opacity-60' alt="" /> {JobData.location}</span>
                   <span className='flex items-center gap-1.5'><img src={assets.person_icon} className='w-4 opacity-60' alt="" /> {JobData.level}</span>
-                  <span className='flex items-center gap-1.5'><img src={assets.money_icon} className='w-4 opacity-60' alt="" /> {kconvert.convertTo(JobData.salary)}</span>
+                  <span className='flex items-center gap-1.5'><img src={assets.money_icon} className='w-4 opacity-60' alt="" /> {formatSalary(JobData.salary)}</span>
                   <span className='px-2 py-0.5 rounded bg-blue-100 text-blue-700 text-xs font-bold border border-blue-200'>{JobData.offerType || 'Direct FTE'}</span>
                 </div>
               </div>

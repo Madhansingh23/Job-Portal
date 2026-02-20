@@ -6,20 +6,24 @@ import Job from "../models/Job.js";
 export const getPlacementReport = async (req, res) => {
     try {
         const users = await User.find({ role: 'student' })
-            .populate('jobsApplied')
-            .populate('acceptedOffers')
-            .select('-password');
+            .populate('acceptedOffers', 'title')
+            .select('-password')
+            .lean();
 
         const reportData = users.map(user => ({
-            registerNumber: user.registerNumber,
+            registerNumber: user.registerNumber || 'N/A',
             name: user.name,
             email: user.email,
-            dept: user.dept,
-            batch: user.batch,
-            cgpa: user.cgpa,
-            phone: user.phone,
-            offers: user.offerDetails.count,
-            placed: user.offerDetails.accepted ? 'Yes' : 'No',
+            dept: user.dept || 'N/A',
+            batch: user.batch || 'N/A',
+            cgpa: user.cgpa || 0,
+            phone: user.phone || 'N/A',
+            tenthMarks: user.tenthMarks || 'N/A',
+            twelfthMarks: user.twelfthMarks || 'N/A',
+            numberOfArrears: user.numberOfArrears ?? 0,
+            offers: user.offerDetails?.count || 0,
+            placed: user.offerDetails?.accepted ? 'Yes' : 'No',
+            acceptedCompanies: (user.acceptedOffers || []).map(j => j.title).join(', ') || 'None'
         }));
 
         res.json({ success: true, reportData });
@@ -29,27 +33,60 @@ export const getPlacementReport = async (req, res) => {
     }
 }
 
-// Get Dashboard Stats (Graph Data)
+// Get Dashboard Stats (Dynamic Graph Data)
 export const getDashboardStats = async (req, res) => {
     try {
-        // 1. Placement Funnel Data
+        // 1. DYNAMIC Placement Funnel — aggregated from real round data
         const totalApplied = await JobApplication.countDocuments();
-        const round1 = await JobApplication.countDocuments({ status: 'Round 1' });
-        const round2 = await JobApplication.countDocuments({ status: 'Round 2' });
         const selected = await JobApplication.countDocuments({ status: 'Selected' });
-        const offersAccepted = await JobApplication.countDocuments({ status: 'Offer Accepted' });
+        const offersAccepted = await JobApplication.countDocuments({ offerStatus: 'Accepted' });
+        const offersRejected = await JobApplication.countDocuments({ offerStatus: 'Rejected' });
+        const rejected = await JobApplication.countDocuments({ status: 'Rejected' });
+        const inProgress = await JobApplication.countDocuments({
+            status: { $nin: ['Selected', 'Rejected', 'Pending', 'Applied'] }
+        });
 
+        // Build dynamic round counts from roundHistory across all applications
+        const roundAggregation = await JobApplication.aggregate([
+            { $unwind: '$roundHistory' },
+            {
+                $group: {
+                    _id: '$roundHistory.round',
+                    total: { $sum: 1 },
+                    passed: { $sum: { $cond: [{ $eq: ['$roundHistory.status', 'Passed'] }, 1, 0] } },
+                    failed: { $sum: { $cond: [{ $eq: ['$roundHistory.status', 'Failed'] }, 1, 0] } }
+                }
+            },
+            { $sort: { _id: 1 } }
+        ]);
+
+        // Standard funnel (always shown)
         const funnelData = [
-            { name: 'Applied', value: totalApplied },
-            { name: 'Round 1', value: round1 },
-            { name: 'Round 2', value: round2 },
-            { name: 'Selected', value: selected },
-            { name: 'Accepted', value: offersAccepted },
+            { name: 'Total Applied', value: totalApplied },
         ];
 
+        // Add dynamic rounds from actual data
+        roundAggregation.forEach(round => {
+            funnelData.push({
+                name: round._id,
+                value: round.passed,
+                total: round.total,
+                failed: round.failed
+            });
+        });
+
+        // If no round data exists, add "In Progress" as middle step
+        if (roundAggregation.length === 0 && inProgress > 0) {
+            funnelData.push({ name: 'In Progress', value: inProgress });
+        }
+
+        funnelData.push(
+            { name: 'Selected', value: selected },
+            { name: 'Offers Accepted', value: offersAccepted }
+        );
+
         // 2. Department-wise Placed Students
-        // Find all students who have accepted an offer
-        const placedStudents = await User.find({ 'offerDetails.accepted': true });
+        const placedStudents = await User.find({ 'offerDetails.accepted': true }).lean();
 
         const deptCounts = {};
         placedStudents.forEach(student => {
@@ -62,7 +99,26 @@ export const getDashboardStats = async (req, res) => {
             placements: deptCounts[dept]
         }));
 
-        res.json({ success: true, funnelData, deptData });
+        // 3. Summary stats
+        const totalStudents = await User.countDocuments({ role: 'student' });
+        const totalJobs = await Job.countDocuments({ visible: true });
+        const totalCompaniesHired = await JobApplication.distinct('companyId', { offerStatus: 'Accepted' });
+
+        const summaryStats = {
+            totalStudents,
+            totalJobs,
+            totalApplied,
+            selected,
+            offersAccepted,
+            offersRejected,
+            rejected,
+            companiesHired: totalCompaniesHired.length,
+            placementRate: totalStudents > 0
+                ? ((placedStudents.length / totalStudents) * 100).toFixed(1)
+                : '0.0'
+        };
+
+        res.json({ success: true, funnelData, deptData, summaryStats });
 
     } catch (error) {
         res.json({ success: false, message: error.message });

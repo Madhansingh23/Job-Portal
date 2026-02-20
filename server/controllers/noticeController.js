@@ -1,16 +1,20 @@
 import Notice from "../models/Notice.js";
 import User from "../models/User.js";
 
-// Create Notice
+// Create Notice (Coordinator)
 export const createNotice = async (req, res) => {
     try {
         const { title, description, type, targetGroup, targetDept } = req.body;
-        const userId = req.body.userId; // From authMiddleware
+        const userId = req.user ? req.user._id : req.userId;
+
+        if (!title || !description) {
+            return res.json({ success: false, message: 'Title and description are required' });
+        }
 
         const notice = await Notice.create({
             title,
             description,
-            type,
+            type: type || 'All',
             targetGroup,
             targetDept,
             postedBy: userId,
@@ -37,17 +41,13 @@ export const getAllNotices = async (req, res) => {
 // Get Student Notices (Filtered by relevance)
 export const getStudentNotices = async (req, res) => {
     try {
-        const userId = req.body.userId; // From authMiddleware
+        // `protect` middleware sets req.user, not req.userId
+        const userId = req.user ? req.user._id : req.userId;
         const user = await User.findById(userId).populate('groups');
 
         if (!user) return res.json({ success: false, message: "User not found" });
 
-        // Criteria:
-        // 1. Type = 'All'
-        // 2. Type = 'Department' AND targetDept = user.dept
-        // 3. Type = 'Group' AND targetGroup matches one of user's groups
-
-        const userGroupIds = user.groups.map(g => g._id);
+        const userGroupIds = (user.groups || []).map(g => g._id);
 
         const notices = await Notice.find({
             $or: [
@@ -68,6 +68,16 @@ export const getStudentNotices = async (req, res) => {
 export const deleteNotice = async (req, res) => {
     try {
         const { id } = req.body;
+
+        if (!id) {
+            return res.json({ success: false, message: 'Notice ID is required' });
+        }
+
+        const notice = await Notice.findById(id);
+        if (!notice) {
+            return res.json({ success: false, message: 'Notice not found' });
+        }
+
         await Notice.findByIdAndDelete(id);
         res.json({ success: true, message: "Notice Deleted" });
     } catch (error) {
