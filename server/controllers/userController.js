@@ -56,6 +56,19 @@ export const applyForJob = async (req, res) => {
         if (user.cgpa < jobData.minCGPA) {
             return res.json({ success: false, message: 'Your CGPA is not enough for this job' })
         }
+        if (jobData.minTenthMarks > 0 && (user.tenthMarks || 0) < jobData.minTenthMarks) {
+            return res.json({ success: false, message: `Minimum 10th Marks required: ${jobData.minTenthMarks}%` })
+        }
+        if (jobData.minTwelfthMarks > 0 && (user.twelfthMarks || 0) < jobData.minTwelfthMarks) {
+            return res.json({ success: false, message: `Minimum 12th Marks required: ${jobData.minTwelfthMarks}%` })
+        }
+        if (jobData.maxArrears !== undefined && (user.numberOfArrears || 0) > jobData.maxArrears) {
+            return res.json({ success: false, message: `Maximum Arrears allowed: ${jobData.maxArrears}` })
+        }
+
+        if (!user.resume) {
+            return res.json({ success: false, message: 'Please upload your resume before applying' })
+        }
 
         // Add more checks here if needed (Groups, Dept)
 
@@ -176,9 +189,10 @@ export const withdrawApplication = async (req, res) => {
 }
 
 // Update User Profile (General - Student)
+// Update User Profile (General - Student)
 export const updateUserProfile = async (req, res) => {
     try {
-        const { userId, firstName, lastName, phone, currentLocation, preferredLocation, gender } = req.body
+        const { userId, firstName, lastName, phone, currentLocation, preferredLocation, gender, cgpa, dept, registerNumber, batch, branch, groups, tenthMarks, twelfthMarks, numberOfArrears } = req.body
 
         const user = await User.findById(userId)
         if (!user) return res.json({ success: false, message: 'User not found' })
@@ -189,6 +203,27 @@ export const updateUserProfile = async (req, res) => {
         if (currentLocation) user.currentLocation = currentLocation
         if (preferredLocation) user.preferredLocation = preferredLocation
         if (gender) user.gender = gender
+
+        // Academic Details (Allowing updates for now to ensure students can complete profile)
+        if (cgpa) user.cgpa = cgpa
+        if (dept) user.dept = dept
+        if (registerNumber) user.registerNumber = registerNumber
+        if (batch) user.batch = batch
+        if (branch) user.branch = branch
+
+        // New Academic Fields
+        if (tenthMarks !== undefined) {
+            if (tenthMarks < 0 || tenthMarks > 100) return res.json({ success: false, message: '10th Marks must be between 0 and 100' })
+            user.tenthMarks = tenthMarks
+        }
+        if (twelfthMarks !== undefined) {
+            if (twelfthMarks < 0 || twelfthMarks > 100) return res.json({ success: false, message: '12th Marks must be between 0 and 100' })
+            user.twelfthMarks = twelfthMarks
+        }
+        if (numberOfArrears !== undefined) user.numberOfArrears = numberOfArrears
+
+        // Note: Groups usually managed by admin/coordinator but allowing if passed for flexibility (or create separate endpoint)
+        if (groups) user.groups = groups
 
         // Only update name if first/last name provided
         if (firstName || lastName) {
@@ -219,7 +254,10 @@ export const adminUpdateUserProfile = async (req, res) => {
             return res.json({ success: false, message: 'User not found' })
         }
 
-        if (cgpa !== undefined) user.cgpa = cgpa
+        if (cgpa !== undefined) {
+            if (cgpa < 0 || cgpa > 10) return res.json({ success: false, message: 'CGPA must be between 0 and 10' })
+            user.cgpa = cgpa
+        }
         if (username) user.username = username
         if (name) user.name = name
         if (registerNumber) user.registerNumber = registerNumber
@@ -231,6 +269,47 @@ export const adminUpdateUserProfile = async (req, res) => {
         await user.save()
 
         res.json({ success: true, message: 'User profile updated by Coordinator' })
+
+    } catch (error) {
+        res.json({ success: false, message: error.message })
+    }
+}
+
+// Student Respond to Offer
+export const respondToOffer = async (req, res) => {
+    try {
+        const { applicationId, status } = req.body
+        const userId = req.body.userId
+
+        if (!['Accepted', 'Rejected'].includes(status)) {
+            return res.json({ success: false, message: 'Invalid status' })
+        }
+
+        const application = await JobApplication.findOne({ _id: applicationId, userId })
+        if (!application) {
+            return res.json({ success: false, message: 'Application not found' })
+        }
+
+        if (application.status !== 'Selected') {
+            return res.json({ success: false, message: 'You can only respond to selected applications' })
+        }
+
+        application.offerStatus = status
+        await application.save()
+
+        // Update User Stats
+        const user = await User.findById(userId)
+        if (status === 'Accepted') {
+            user.offerDetails.hasOffer = true
+            user.offerDetails.count = (user.offerDetails.count || 0) + 1
+            user.offerDetails.accepted = true
+            user.acceptedOffers.push(application.jobId)
+        } else {
+            user.rejectedOffers.push(application.jobId)
+        }
+        await user.save()
+
+        res.json({ success: true, message: `Offer ${status} successfully` })
 
     } catch (error) {
         res.json({ success: false, message: error.message })

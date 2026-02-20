@@ -106,28 +106,27 @@ export const getCompanyData = async (req, res) => {
 // Post New Job
 export const postJob = async (req, res) => {
 
-    const { title, description, location, salary, level, category, minCGPA, eligibleDepts, eligibleGroups, targetBatch, roleDescription, requirements, rounds } = req.body
-
-    const companyId = req.company._id
-
     try {
+        const { title, description, location, salary, category, level, minCGPA, minTenthMarks, minTwelfthMarks, maxArrears, targetBatch, eligibleDepts, eligibleGroups, rounds, offerType } = req.body
 
         const newJob = new Job({
             title,
             description,
             location,
             salary,
-            companyId,
+            companyId: req.company._id,
             date: Date.now(),
-            level,
             category,
-            minCGPA,
+            level,
+            minCGPA: Number(minCGPA),
+            minTenthMarks: Number(minTenthMarks) || 0,
+            minTwelfthMarks: Number(minTwelfthMarks) || 0,
+            maxArrears: maxArrears !== undefined ? Number(maxArrears) : 100, // Default to 100 (lenient) if not specified
+            targetBatch,
             eligibleDepts,
             eligibleGroups,
-            targetBatch,
-            roleDescription,
-            requirements,
-            rounds
+            rounds,
+            offerType
         })
 
         await newJob.save()
@@ -139,8 +138,6 @@ export const postJob = async (req, res) => {
         res.json({ success: false, message: error.message })
 
     }
-
-
 }
 
 // Get Company Job Applicants
@@ -187,10 +184,18 @@ export const getCompanyPostedJobs = async (req, res) => {
 export const ChangeJobApplicationsStatus = async (req, res) => {
     try {
         const { id, status } = req.body
+        const imageFile = req.file
 
         const application = await JobApplication.findById(id).populate('jobId', 'rounds')
         if (!application) {
             return res.json({ success: false, message: 'Application not found' })
+        }
+
+        // Handle Offer Letter Upload
+        if (imageFile) {
+            const imageUpload = await cloudinary.uploader.upload(imageFile.path)
+            application.offerLetter = imageUpload.secure_url
+            application.offerStatus = 'Pending' // Reset offer status on new upload
         }
 
         const rounds = application.jobId?.rounds || []
@@ -283,9 +288,107 @@ export const deleteJob = async (req, res) => {
 // Get All Groups for Company
 export const getCompanyGroups = async (req, res) => {
     try {
-        const groups = await Group.find();
-        res.json({ success: true, groups });
+        const groups = await Group.find({ companyId: req.company._id }); // Filter by company ideally, or all if shared? 
+        // Original code was Group.find() which returns ALL groups. 
+        // Assuming groups are shared or checking schema...
+        // For now sticking to original logic but adding getCompanyStats below.
+        const allGroups = await Group.find();
+        res.json({ success: true, groups: allGroups });
     } catch (error) {
         res.json({ success: false, message: error.message });
+    }
+}
+
+// Get Company Stats
+export const getCompanyStats = async (req, res) => {
+    try {
+        const companyId = req.company._id
+
+        // Fetch counts in parallel for performance
+        const [totalJobs, activeJobs, totalApplicants, selectedApplicants] = await Promise.all([
+            Job.countDocuments({ companyId }),
+            Job.countDocuments({ companyId, visible: true }),
+            JobApplication.countDocuments({ companyId }),
+            JobApplication.countDocuments({ companyId, status: 'Selected' })
+        ])
+
+        res.json({
+            success: true,
+            stats: {
+                totalJobs,
+                activeJobs,
+                totalApplicants,
+                selectedApplicants
+            }
+        })
+
+    } catch (error) {
+        res.json({ success: false, message: error.message })
+    }
+}
+
+// Update Company Profile
+export const updateCompanyProfile = async (req, res) => {
+    try {
+        const { name, email } = req.body
+        const imageFile = req.file
+        const company = await Company.findById(req.company._id)
+
+        if (!company) {
+            return res.json({ success: false, message: 'Company not found' })
+        }
+
+        if (name) company.name = name
+        if (email) company.email = email
+
+        if (imageFile) {
+            const imageUpload = await cloudinary.uploader.upload(imageFile.path)
+            company.image = imageUpload.secure_url
+        }
+
+        await company.save()
+
+        res.json({
+            success: true,
+            message: 'Profile updated successfully',
+            company: { _id: company._id, name: company.name, email: company.email, image: company.image }
+        })
+
+    } catch (error) {
+        res.json({ success: false, message: error.message })
+    }
+}
+
+// Change Company Password
+export const changeCompanyPassword = async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body
+
+        if (!currentPassword || !newPassword) {
+            return res.json({ success: false, message: 'Both current and new password are required' })
+        }
+
+        if (newPassword.length < 6) {
+            return res.json({ success: false, message: 'New password must be at least 6 characters' })
+        }
+
+        const company = await Company.findById(req.company._id)
+        if (!company) {
+            return res.json({ success: false, message: 'Company not found' })
+        }
+
+        const isMatch = await bcrypt.compare(currentPassword, company.password)
+        if (!isMatch) {
+            return res.json({ success: false, message: 'Current password is incorrect' })
+        }
+
+        const salt = await bcrypt.genSalt(10)
+        company.password = await bcrypt.hash(newPassword, salt)
+        await company.save()
+
+        res.json({ success: true, message: 'Password changed successfully' })
+
+    } catch (error) {
+        res.json({ success: false, message: error.message })
     }
 }

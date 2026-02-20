@@ -28,6 +28,26 @@ export const AppContextProvider = (props) => {
     const [userData, setUserData] = useState(null)
     const [userApplications, setUserApplications] = useState([])
 
+    // Helper to detect expired token responses and auto-logout
+    const isTokenExpired = (data) => {
+        return data.expired === true ||
+            (data.message && (data.message.toLowerCase().includes('expired') || data.message.toLowerCase().includes('jwt expired')))
+    }
+
+    const handleExpiredToken = (isCompany = false) => {
+        if (isCompany) {
+            setCompanyToken(null)
+            setCompanyData(null)
+            localStorage.removeItem('companyToken')
+        } else {
+            setToken(null)
+            setUser(null)
+            setUserData(null)
+            localStorage.removeItem('token')
+        }
+        toast.error('Session expired. Please login again.')
+    }
+
     // Function to Fetch Jobs 
     const fetchJobs = async () => {
         try {
@@ -44,8 +64,10 @@ export const AppContextProvider = (props) => {
             if (data.success) {
                 setJobs(data.jobs)
             } else {
-                if (data.message === 'Not Authorized Login Again') {
-                    logout()
+                if (isTokenExpired(data)) {
+                    handleExpiredToken()
+                } else if (data.message === 'Not Authorized Login Again') {
+                    handleExpiredToken()
                 } else {
                     toast.error(data.message)
                 }
@@ -62,7 +84,11 @@ export const AppContextProvider = (props) => {
             if (data.success) {
                 setCompanyData(data.company)
             } else {
-                toast.error(data.message)
+                if (isTokenExpired(data)) {
+                    handleExpiredToken(true)
+                } else {
+                    toast.error(data.message)
+                }
             }
         } catch (error) {
             toast.error(error.message)
@@ -79,8 +105,10 @@ export const AppContextProvider = (props) => {
                 setUserData(data.user)
                 setUser(data.user)
             } else {
-                if (data.message === 'Not Authorized Login Again') {
-                    logout()
+                if (isTokenExpired(data)) {
+                    handleExpiredToken()
+                } else if (data.message === 'Not Authorized Login Again') {
+                    handleExpiredToken()
                 } else {
                     toast.error(data.message)
                 }
@@ -99,7 +127,11 @@ export const AppContextProvider = (props) => {
             if (data.success) {
                 setUserApplications(data.applications)
             } else {
-                toast.error(data.message)
+                if (isTokenExpired(data)) {
+                    handleExpiredToken()
+                } else {
+                    toast.error(data.message)
+                }
             }
         } catch (error) {
             toast.error(error.message)

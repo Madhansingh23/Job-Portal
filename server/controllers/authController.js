@@ -4,6 +4,16 @@ import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import bcrypt from 'bcrypt';
 
+// Strong password validation
+const validatePassword = (password) => {
+    if (!password || password.length < 8) return 'Password must be at least 8 characters long';
+    if (!/[A-Z]/.test(password)) return 'Password must contain at least one uppercase letter';
+    if (!/[a-z]/.test(password)) return 'Password must contain at least one lowercase letter';
+    if (!/[0-9]/.test(password)) return 'Password must contain at least one number';
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) return 'Password must contain at least one special character (!@#$%^&*...)';
+    return null;
+}
+
 // Configure SMTP transporter using env vars
 const smtpHost = process.env.SMTP_HOST || 'smtp.ethereal.email';
 const smtpPort = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 587;
@@ -32,11 +42,6 @@ export const sendOtp = async (req, res) => {
 
         if (!email) return res.json({ success: false, message: "Email is required" });
 
-        // Check if user already exists for registration flow check? 
-        // Actually, we might want to allow checking if email exists before sending OTP for registration vs login
-        // But for now, let's just send OTP. Verification handles the rest.
-
-
         // Generate 6 digit OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -46,34 +51,54 @@ export const sendOtp = async (req, res) => {
         // Log to console for Development
         console.log(`[DEV ONLY] OTP for ${email}: ${otp}`);
 
+        // Email Template
+        const mailOptions = {
+            from: '"Campus Placement" <no-reply@campus.com>',
+            to: email,
+            subject: "Verification Code - Campus Placement",
+            html: `
+                <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 500px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0;">
+                    <div style="background-color: #2563eb; padding: 20px; text-align: center;">
+                        <h1 style="color: #ffffff; margin: 0; font-size: 24px;">Campus Placement</h1>
+                    </div>
+                    <div style="padding: 30px 20px; text-align: center;">
+                        <p style="color: #64748b; font-size: 16px; margin-bottom: 20px;">Use the following verification code to complete your registration.</p>
+                        <div style="background-color: #f8fafc; display: inline-block; padding: 15px 30px; border-radius: 8px; border: 1px dashed #cbd5e1; margin-bottom: 20px;">
+                            <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #1e293b; display: block;">${otp}</span>
+                        </div>
+                        <p style="color: #94a3b8; font-size: 14px;">This code is valid for 5 minutes.</p>
+                    </div>
+                    <div style="background-color: #f1f5f9; padding: 15px; text-align: center; font-size: 12px; color: #64748b;">
+                        &copy; ${new Date().getFullYear()} Campus Placement Portal. All rights reserved.
+                    </div>
+                </div>
+            `
+        };
+
         // Send Email
         let mailSent = false;
         try {
-            await transporter.sendMail({
-                from: '"Campus Placement" <no-reply@campus.com>',
-                to: email,
-                subject: "Your Login OTP",
-                text: `Your OTP is ${otp}. It expires in 5 minutes.`
-            });
+            await transporter.sendMail(mailOptions);
             mailSent = true;
+            console.log(`OTP sent to ${email} via SMTP.`);
         } catch (mailError) {
-            console.warn("Failed to send email:", mailError.message);
+            console.error(`Failed to send OTP to ${email}:`, mailError.message);
             mailSent = false;
         }
 
-        // In non-production, include the OTP in the response to aid debugging
-        if (process.env.NODE_ENV !== 'production') {
-            return res.json({ success: true, message: "OTP sent successfully", otp, mailSent });
+        // Response
+        if (process.env.NODE_ENV !== 'production' && !mailSent) {
+            return res.json({ success: true, message: "OTP generated (Email failed)", otp }); // Fallback for dev without SMTP
         }
 
-        // In production, report based on actual mail send result
         if (!mailSent) {
-            return res.json({ success: false, message: "Failed to send OTP email" });
+            return res.json({ success: false, message: "Failed to send OTP email. Please check the email address." });
         }
 
-        return res.json({ success: true, message: "OTP sent successfully" });
+        return res.json({ success: true, message: "Verification code sent to your email" });
 
     } catch (error) {
+        console.error("OTP Error:", error);
         res.json({ success: false, message: error.message });
     }
 }
@@ -98,6 +123,10 @@ export const register = async (req, res) => {
         if (userExists) {
             return res.json({ success: false, message: "User already registered" });
         }
+
+        // Validate password strength
+        const pwError = validatePassword(password);
+        if (pwError) return res.json({ success: false, message: pwError });
 
         // Hash Password
         const salt = await bcrypt.genSalt(10);
@@ -170,7 +199,22 @@ export const forgotPassword = async (req, res) => {
 
         const user = await User.findOne({ email }).select('+password');
 
-        if (!user) {
+        // Also check Company and Coordinator if not found in User (for shared Auth flow)
+        // NOTE: Currently User model handles 'student' and 'coordinator' roles. 
+        // 'Company' is a separate model. We need to check Company model if not found in User.
+
+        let targetUser = user;
+        let isCompany = false;
+
+        if (!targetUser) {
+            // Dynamic import to avoid circular dependency issues if any, or just import at top if clean.
+            // For now assuming we might need to handle Company reset here too since frontend calls this for all.
+            const Company = (await import("../models/Company.js")).default;
+            targetUser = await Company.findOne({ email });
+            if (targetUser) isCompany = true;
+        }
+
+        if (!targetUser) {
             return res.json({ success: false, message: "No account found with this email" });
         }
 
@@ -184,32 +228,45 @@ export const forgotPassword = async (req, res) => {
         // Hash and save
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(tempPassword, salt);
-        user.password = hashedPassword;
-        await user.save();
+        targetUser.password = hashedPassword;
+        await targetUser.save();
+
+        // Email Template
+        const mailOptions = {
+            from: '"Campus Placement" <no-reply@campus.com>',
+            to: email,
+            subject: "Password Reset Request",
+            html: `
+                <div style="font-family: 'Segoe UI', sans-serif; max-width: 500px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+                    <div style="background-color: #ef4444; padding: 20px; text-align: center;">
+                        <h2 style="color: white; margin: 0;">Password Reset</h2>
+                    </div>
+                    <div style="padding: 30px 20px;">
+                        <p style="color: #334155; margin-bottom: 20px;">Hello <strong>${targetUser.name}</strong>,</p>
+                        <p style="color: #64748b;">We received a request to reset your password. Use the temporary password below to login:</p>
+                        
+                        <div style="background: #f8fafc; padding: 15px; border-radius: 8px; text-align: center; margin: 25px 0; border: 1px dashed #cbd5e1;">
+                            <code style="font-size: 24px; font-weight: bold; color: #1e293b; letter-spacing: 2px;">${tempPassword}</code>
+                        </div>
+
+                        <div style="background-color: #fff1f2; border-left: 4px solid #ef4444; padding: 10px 15px; margin-bottom: 20px;">
+                            <p style="color: #991b1b; font-size: 13px; margin: 0;"><strong>Security Alert:</strong> Please login and change this password immediately.</p>
+                        </div>
+                        
+                        <p style="color: #94a3b8; font-size: 12px; text-align: center; margin-top: 30px;">If you didn't request this, please contact support immediately.</p>
+                    </div>
+                </div>
+            `
+        };
 
         // Send email
         let mailSent = false;
         try {
-            await transporter.sendMail({
-                from: '"PSNA Jobs" <no-reply@campus.com>',
-                to: email,
-                subject: "Your Temporary Password - PSNA Jobs",
-                html: `
-                    <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px;">
-                        <h2 style="color: #2563eb;">Password Reset</h2>
-                        <p>Hi <strong>${user.name}</strong>,</p>
-                        <p>Your temporary password is:</p>
-                        <div style="background: #f1f5f9; padding: 15px; border-radius: 8px; text-align: center; margin: 16px 0;">
-                            <code style="font-size: 22px; font-weight: bold; letter-spacing: 2px; color: #1e40af;">${tempPassword}</code>
-                        </div>
-                        <p style="color: #ef4444; font-size: 14px;">⚠️ Please login and change your password immediately.</p>
-                        <p style="color: #64748b; font-size: 12px;">If you didn't request this, please contact support.</p>
-                    </div>
-                `
-            });
+            await transporter.sendMail(mailOptions);
             mailSent = true;
+            console.log(`Password reset email sent to ${email}`);
         } catch (mailError) {
-            console.warn("Failed to send password reset email:", mailError.message);
+            console.error("Failed to send password reset email:", mailError.message);
         }
 
         // In dev mode, include temp password in response
@@ -218,12 +275,13 @@ export const forgotPassword = async (req, res) => {
         }
 
         if (!mailSent) {
-            return res.json({ success: false, message: "Failed to send reset email. Try again." });
+            return res.json({ success: false, message: "Failed to send reset email. Service may be down." });
         }
 
         res.json({ success: true, message: "Temporary password sent to your email" });
 
     } catch (error) {
+        console.error("Forgot Password Error:", error);
         res.json({ success: false, message: error.message });
     }
 }
@@ -237,8 +295,9 @@ export const changePassword = async (req, res) => {
             return res.json({ success: false, message: "All fields are required" });
         }
 
-        if (newPassword.length < 8) {
-            return res.json({ success: false, message: "New password must be at least 8 characters" });
+        const pwError = validatePassword(newPassword);
+        if (pwError) {
+            return res.json({ success: false, message: pwError });
         }
 
         const user = await User.findOne({ email }).select('+password');

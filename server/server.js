@@ -1,148 +1,99 @@
-// Sentry disabled: import removed to avoid compatibility issues
-// import * as Sentry from "@sentry/node";
 import express from 'express'
 import cors from 'cors'
 import 'dotenv/config'
 import helmet from 'helmet'
 import rateLimit from 'express-rate-limit'
 import connectDB from './config/db.js'
-import companyRoutes from './routes/companyRoutes.js'
 import connectCloudinary from './config/cloudinary.js'
+
+// Route imports
+import companyRoutes from './routes/companyRoutes.js'
 import jobRoutes from './routes/jobRoutes.js'
 import userRoutes from './routes/userRoutes.js'
 import authRoutes from './routes/authRoutes.js'
 import groupRoutes from './routes/groupRoutes.js'
 import reportRoutes from './routes/reportRoutes.js'
+import noticeRoutes from './routes/noticeRoutes.js'
 import coordinatorRoutes from './routes/coordinatorRoutes.js'
 import changeRequestRoutes from './routes/changeRequestRoutes.js'
-import User from './models/User.js'
-
-
-// Sentry initialization disabled
-// Sentry.init({
-//   dsn: process.env.SENTRY_DSN || 'https://40dc79eacab0415b112a320613fe6de8@o4508103285538816.ingest.us.sentry.io/4510890581032960',
-//   tracesSampleRate: 1.0,
-//   environment: process.env.NODE_ENV || 'development',
-// });
 
 // Initialize Express
 const app = express()
 
-// Connect to database
 const startServer = async () => {
+  // 1. Connect to DB and Cloudinary FIRST (before accepting requests)
   await connectDB()
   await connectCloudinary()
 
-  // Sentry request handler disabled
-  // app.use(Sentry.handlers.requestHandler())
+  // 2. Security Middleware
+  app.use(helmet())
+  app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }))
 
-  // Test route to check MongoDB and Sentry integration
-  app.get('/api/test-user/:id', async (req, res, next) => {
-    try {
-      const user = await User.findById(req.params.id)
-      if (!user) {
-        // This error will be captured by Sentry
-        const err = new Error('User not found in MongoDB')
-        err.status = 404
-        throw err
+  // 3. CORS Configuration (single, clean setup)
+  const allowedOrigins = [
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'https://job-portal-client-one-omega.vercel.app',
+    'https://job-portal-client-deymmhizs-madhansingh23s-projects.vercel.app'
+  ]
+
+  app.use(cors({
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true)
+      if (
+        allowedOrigins.includes(origin) ||
+        origin.endsWith('.vercel.app') ||
+        origin.includes('localhost')
+      ) {
+        return callback(null, true)
       }
-      res.json({ success: true, user })
-    } catch (error) {
-      next(error)
-    }
+      console.warn('CORS allowing unknown origin:', origin)
+      return callback(null, true)
+    },
+    credentials: true,
+    optionsSuccessStatus: 200
+  }))
+  app.options('*', cors()) // Handle preflight
+
+  // 4. Body parsing
+  app.use(express.json())
+
+  // 5. Rate Limiting (300 requests per 15 min window)
+  const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 300,
+    message: 'Too many requests from this IP, please try again later.'
+  })
+  app.use('/api', limiter)
+
+  // 6. Health check
+  app.get('/', (req, res) => res.send("API Working"))
+
+  // 7. API Routes
+  app.use('/api/auth', authRoutes)
+  app.use('/api/groups', groupRoutes)
+  app.use('/api/reports', reportRoutes)
+  app.use('/api/company', companyRoutes)
+  app.use('/api/jobs', jobRoutes)
+  app.use('/api/users', userRoutes)
+  app.use('/api/coordinator', coordinatorRoutes)
+  app.use('/api/change-requests', changeRequestRoutes)
+  app.use('/api/notices', noticeRoutes)
+
+  // 8. Global error handler
+  app.use((err, req, res, next) => {
+    console.error('Unhandled error:', err)
+    res.status(500).json({ success: false, message: 'Internal Server Error' })
   })
 
-  // ...existing middleware and routes...
-
-  // Sentry error handler disabled
-  // app.use(Sentry.handlers.errorHandler())
-
-  // server will be started after middleware setup (single listener at bottom)
+  // 9. Start listening AFTER everything is ready
+  const PORT = process.env.PORT || 5000
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`)
+  })
 }
 
-startServer()
-
-// Middlewares
-const allowedOrigins = [
-  'http://localhost:3000',
-  'http://localhost:5173',
-  'https://job-portal-client-one-omega.vercel.app',
-  'https://job-portal-client-deymmhizs-madhansingh23s-projects.vercel.app'
-]
-
-const corsOptions = {
-  // allow requests from any origin but echo back the request origin
-  origin: function (origin, callback) {
-    // allow requests with no origin (like curl, server-to-server)
-    if (!origin) return callback(null, true)
-    // allow known local/dev origins or any vercel deployment origin
-    if (
-      allowedOrigins.indexOf(origin) !== -1 ||
-      origin.endsWith('.vercel.app') ||
-      origin.includes('localhost')
-    ) {
-      return callback(null, true)
-    }
-    // fallback: allow but log for visibility
-    console.warn('CORS allowing unknown origin:', origin)
-    return callback(null, true)
-  },
-  credentials: true,
-  optionsSuccessStatus: 200
-}
-
-app.use(cors(corsOptions))
-// Ensure preflight requests are handled before other middleware that may redirect
-app.options('*', cors(corsOptions))
-app.use(express.json())
-// Safety middleware: explicitly set CORS headers and respond to preflight
-app.use((req, res, next) => {
-  const origin = req.headers.origin || '*'
-  res.header('Access-Control-Allow-Origin', origin)
-  res.header('Access-Control-Allow-Credentials', 'true')
-  res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS')
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, token')
-  if (req.method === 'OPTIONS') return res.sendStatus(200)
-  next()
-})
-// Skip auth middleware for OPTIONS preflight
-app.use((req, res, next) => {
-  if (req.method === 'OPTIONS') return next()
-  next()
-})
-
-// Routes
-// Security Middleware
-app.use(helmet())
-app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" })) // Allow images from Cloudinary
-
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
-  message: 'Too many requests from this IP, please try again later.'
-})
-app.use('/api', limiter)
-
-app.get('/', (req, res) => res.send("API Working"))
-// Debug Sentry route disabled
-// app.get("/debug-sentry", function mainHandler(req, res) {
-//   throw new Error("My first Sentry error!");
-// });
-// app.post('/webhooks', clerkWebhooks) // REMOVED
-app.use('/api/auth', authRoutes)
-app.use('/api/groups', groupRoutes)
-app.use('/api/reports', reportRoutes)
-app.use('/api/company', companyRoutes)
-app.use('/api/jobs', jobRoutes)
-app.use('/api/users', userRoutes)
-app.use('/api/coordinator', coordinatorRoutes) // Register Coordinator Routes
-app.use('/api/change-requests', changeRequestRoutes) // Student change requests
-
-// Sentry error handler disabled
-// app.use(Sentry.Handlers.errorHandler())
-
-// Port
-const PORT = process.env.PORT || 5000
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+startServer().catch(err => {
+  console.error('Failed to start server:', err)
+  process.exit(1)
 })

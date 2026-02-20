@@ -10,6 +10,7 @@ const jobSchema = new mongoose.Schema({
     date: { type: Number, required: true },
     visible: { type: Boolean, default: true },
     companyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Company', required: true },
+    offerType: { type: String, default: 'Direct FTE' }, // Direct FTE, Intern + FTE, Trainee + Intern + FTE, Trainee + FTE
 
     // Job Description Details
     roleDescription: { type: String },
@@ -17,6 +18,9 @@ const jobSchema = new mongoose.Schema({
 
     // Visibility Constraints
     minCGPA: { type: Number, default: 0 },
+    minTenthMarks: { type: Number, default: 0 },
+    minTwelfthMarks: { type: Number, default: 0 },
+    maxArrears: { type: Number, default: 100 }, // Number of allowed standing arrears
     eligibleDepts: { type: [String], default: [] }, // Empty = All Departments
     eligibleGroups: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Group' }], // Empty = No Group Restriction
     targetBatch: { type: String }, // e.g. "2024", "2025"

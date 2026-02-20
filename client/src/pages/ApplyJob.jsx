@@ -77,7 +77,7 @@ const ApplyJob = () => {
     <>
       <Navbar />
 
-      <div className='min-h-screen bg-gray-50'>
+      <div className='min-h-screen bg-gray-50 dark:bg-slate-900 transition-colors'>
 
         {/* Royal Header / Hero */}
         <div className='relative bg-gradient-to-r from-blue-900 to-blue-700 h-64 md:h-80'>
@@ -94,17 +94,18 @@ const ApplyJob = () => {
                   <span className='flex items-center gap-1.5'><img src={assets.location_icon} className='w-4 opacity-60' alt="" /> {JobData.location}</span>
                   <span className='flex items-center gap-1.5'><img src={assets.person_icon} className='w-4 opacity-60' alt="" /> {JobData.level}</span>
                   <span className='flex items-center gap-1.5'><img src={assets.money_icon} className='w-4 opacity-60' alt="" /> {kconvert.convertTo(JobData.salary)}</span>
+                  <span className='px-2 py-0.5 rounded bg-blue-100 text-blue-700 text-xs font-bold border border-blue-200'>{JobData.offerType || 'Direct FTE'}</span>
                 </div>
               </div>
               <div className='flex flex-col items-center gap-2 min-w-[150px]'>
                 <button
                   onClick={applyHandler}
-                  className={`px-8 py-3 rounded-lg font-bold shadow-lg transition transform hover:-translate-y-1 ${isAlreadyApplied ? 'bg-gray-300 text-gray-600 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-blue-500/30'}`}
+                  className={`px-8 py-3 rounded-lg font-bold shadow-lg transition transform hover:-translate-y-1 ${isAlreadyApplied ? 'bg-gray-300 dark:bg-slate-700 text-gray-600 dark:text-slate-400 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-blue-500/30'}`}
                   disabled={isAlreadyApplied}
                 >
                   {isAlreadyApplied ? 'Applied' : 'Apply Now'}
                 </button>
-                <p className='text-xs text-gray-400'>Posted {moment(JobData.date).fromNow()}</p>
+                <p className='text-xs text-gray-400 dark:text-gray-300'>Posted {moment(JobData.date).fromNow()}</p>
               </div>
             </div>
           </div>
@@ -116,14 +117,17 @@ const ApplyJob = () => {
 
             {/* Left Column: Description */}
             <div className='lg:col-span-2 space-y-8'>
-              <div className='bg-white p-8 rounded-xl shadow-sm border border-gray-100'>
-                <h2 className='text-2xl font-bold text-gray-800 mb-6 border-b pb-2'>Job Description</h2>
-                <div className='rich-text text-gray-600 leading-relaxed' dangerouslySetInnerHTML={{ __html: JobData.description }}></div>
+              <div className='bg-white dark:bg-slate-800 p-8 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700'>
+                <h2 className='text-2xl font-bold text-gray-800 dark:text-white mb-6 border-b dark:border-slate-700 pb-2'>Job Description</h2>
+                <div className='rich-text text-gray-600 dark:text-slate-300 leading-relaxed' dangerouslySetInnerHTML={{ __html: JobData.description }}></div>
 
-                <div className='mt-8 pt-6 border-t'>
-                  <h3 className='font-semibold text-gray-800 mb-4'>Requirements</h3>
-                  <ul className='list-disc list-inside text-gray-600 space-y-2'>
+                <div className='mt-8 pt-6 border-t dark:border-slate-700'>
+                  <h3 className='font-semibold text-gray-800 dark:text-white mb-4'>Requirements</h3>
+                  <ul className='list-disc list-inside text-gray-600 dark:text-slate-300 space-y-2'>
                     <li>CGPA: {JobData.minCGPA || 'N/A'}+</li>
+                    <li>10th Marks: {JobData.minTenthMarks ? `${JobData.minTenthMarks}%+` : 'N/A'}</li>
+                    <li>12th Marks: {JobData.minTwelfthMarks ? `${JobData.minTwelfthMarks}%+` : 'N/A'}</li>
+                    <li>Backlogs Allowed: {JobData.maxArrears !== undefined ? JobData.maxArrears : 'No Limit'}</li>
                     <li>Batch: {JobData.targetBatch || 'Any'}</li>
                     <li>Departments: {JobData.eligibleDepts?.join(', ') || 'All'}</li>
                   </ul>
@@ -133,15 +137,15 @@ const ApplyJob = () => {
 
             {/* Right Column: More Jobs */}
             <div className='space-y-6'>
-              <div className='bg-white p-6 rounded-xl shadow-sm border border-gray-100'>
-                <h3 className='font-bold text-lg text-gray-800 mb-4'>More from {JobData.companyId.name}</h3>
+              <div className='bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700'>
+                <h3 className='font-bold text-lg text-gray-800 dark:text-white mb-4'>More from {JobData.companyId.name}</h3>
                 <div className='space-y-4'>
                   {jobs.filter(job => job._id !== JobData._id && job.companyId._id === JobData.companyId._id)
                     .slice(0, 3)
                     .map((job, index) => <JobCard key={index} job={job} />)
                   }
                   {jobs.filter(job => job._id !== JobData._id && job.companyId._id === JobData.companyId._id).length === 0 && (
-                    <p className='text-gray-400 text-sm'>No other jobs active.</p>
+                    <p className='text-gray-400 dark:text-slate-500 text-sm'>No other jobs active.</p>
                   )}
                 </div>
               </div>

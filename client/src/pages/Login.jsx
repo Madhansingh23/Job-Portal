@@ -178,92 +178,100 @@ const Login = () => {
     }
 
     return (
-        <div>
+        <div className="absolute top-0 left-0 w-full h-full bg-[url('https://images.unsplash.com/photo-1541339907198-e08756dedf3f?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center">
+            {/* Overlay */}
+            <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]"></div>
+
             <Navbar />
-            <div className='min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-cyan-100 px-4'>
-                <div className='bg-white/90 backdrop-blur-xl shadow-2xl rounded-2xl p-10 w-full max-w-md border border-white/30'>
 
-                    <h1 className='text-center text-2xl font-bold text-gray-800'>{getTitle()}</h1>
-                    <p className='text-sm text-center text-gray-500 mb-6 mt-1'>{getSubtitle()}</p>
+            <div className='relative min-h-screen flex items-center justify-center px-4'>
+                <div className='glass-card rounded-2xl p-8 sm:p-10 w-full max-w-md relative overflow-hidden animate-fade-in'>
 
-                    <form onSubmit={getFormHandler()}>
+                    {/* Decorative Elements */}
+                    <div className='absolute top-0 right-0 w-32 h-32 bg-royal-blue/20 rounded-bl-full -mr-10 -mt-10 blur-xl pointer-events-none'></div>
+                    <div className='absolute bottom-0 left-0 w-32 h-32 bg-indigo-500/20 rounded-tr-full -ml-10 -mb-10 blur-xl pointer-events-none'></div>
+
+                    <h1 className='text-center text-3xl font-bold text-slate-800 dark:text-white tracking-tight mb-2'>{getTitle()}</h1>
+                    <p className='text-sm text-center text-slate-500 dark:text-slate-300 mb-8'>{getSubtitle()}</p>
+
+                    <form onSubmit={getFormHandler()} className="relative z-10">
 
                         {/* Name field - Sign Up only */}
                         {state === 'Sign Up' && (
-                            <div className='border px-4 py-2 flex items-center gap-2 rounded-full mt-5 bg-gray-50'>
-                                <img src={assets.person_icon} alt="" className="w-5" />
-                                <input className='outline-none text-sm w-full bg-transparent' onChange={e => setName(e.target.value)} value={name} type="text" placeholder='Full Name' required />
+                            <div className='border border-slate-200 dark:border-slate-600 px-4 py-3 flex items-center gap-3 rounded-xl mt-4 bg-white/50 dark:bg-slate-800/50 hover:border-royal-blue focus-within:border-royal-blue transition'>
+                                <img src={assets.person_icon} alt="" className="w-5 opacity-60 dark:invert" />
+                                <input className='outline-none text-sm w-full bg-transparent text-slate-700 dark:text-slate-200 placeholder-slate-400' onChange={e => setName(e.target.value)} value={name} type="text" placeholder='Full Name' required />
                             </div>
                         )}
 
                         {/* Email field - all states */}
                         {state !== 'Change Password' && (
-                            <div className='border px-4 py-2 flex items-center gap-2 rounded-full mt-5 bg-gray-50'>
-                                <img src={assets.email_icon} alt="" />
-                                <input className='outline-none text-sm w-full bg-transparent' onChange={e => setEmail(e.target.value)} value={email} type="email" placeholder='Email Address' required />
+                            <div className='border border-slate-200 dark:border-slate-600 px-4 py-3 flex items-center gap-3 rounded-xl mt-4 bg-white/50 dark:bg-slate-800/50 hover:border-royal-blue focus-within:border-royal-blue transition'>
+                                <img src={assets.email_icon} alt="" className="opacity-60 dark:invert" />
+                                <input className='outline-none text-sm w-full bg-transparent text-slate-700 dark:text-slate-200 placeholder-slate-400' onChange={e => setEmail(e.target.value)} value={email} type="email" placeholder='Email Address' required />
                             </div>
                         )}
 
                         {/* Password field - Login and Sign Up */}
                         {(state === 'Login' || state === 'Sign Up') && (
-                            <div className='border px-4 py-2 flex items-center gap-2 rounded-full mt-5 bg-gray-50'>
-                                <img src={assets.lock_icon} alt="" />
-                                <input className='outline-none text-sm w-full bg-transparent' onChange={e => setPassword(e.target.value)} value={password} type="password" placeholder='Password' required />
+                            <div className='border border-slate-200 dark:border-slate-600 px-4 py-3 flex items-center gap-3 rounded-xl mt-4 bg-white/50 dark:bg-slate-800/50 hover:border-royal-blue focus-within:border-royal-blue transition'>
+                                <img src={assets.lock_icon} alt="" className="opacity-60 dark:invert" />
+                                <input className='outline-none text-sm w-full bg-transparent text-slate-700 dark:text-slate-200 placeholder-slate-400' onChange={e => setPassword(e.target.value)} value={password} type="password" placeholder='Password' required />
                             </div>
                         )}
 
                         {/* Confirm Password - Sign Up before OTP */}
                         {state === 'Sign Up' && !isOtpSent && (
-                            <div className='border px-4 py-2 flex items-center gap-2 rounded-full mt-5 bg-gray-50'>
-                                <img src={assets.lock_icon} alt="" />
-                                <input className='outline-none text-sm w-full bg-transparent' onChange={e => setConfirmPassword(e.target.value)} value={confirmPassword} type="password" placeholder='Confirm Password' required />
+                            <div className='border border-slate-200 dark:border-slate-600 px-4 py-3 flex items-center gap-3 rounded-xl mt-4 bg-white/50 dark:bg-slate-800/50 hover:border-royal-blue focus-within:border-royal-blue transition'>
+                                <img src={assets.lock_icon} alt="" className="opacity-60 dark:invert" />
+                                <input className='outline-none text-sm w-full bg-transparent text-slate-700 dark:text-slate-200 placeholder-slate-400' onChange={e => setConfirmPassword(e.target.value)} value={confirmPassword} type="password" placeholder='Confirm Password' required />
                             </div>
                         )}
 
                         {/* OTP field - Sign Up after OTP sent */}
                         {state === 'Sign Up' && isOtpSent && (
-                            <div className='border px-4 py-2 flex items-center gap-2 rounded-full mt-5 bg-gray-50'>
-                                <img src={assets.lock_icon} alt="" />
-                                <input className='outline-none text-sm w-full bg-transparent' onChange={e => setOtp(e.target.value)} value={otp} type="text" placeholder='Enter OTP' required />
+                            <div className='border border-slate-200 dark:border-slate-600 px-4 py-3 flex items-center gap-3 rounded-xl mt-4 bg-white/50 dark:bg-slate-800/50 hover:border-royal-blue focus-within:border-royal-blue transition'>
+                                <img src={assets.lock_icon} alt="" className="opacity-60 dark:invert" />
+                                <input className='outline-none text-sm w-full bg-transparent text-slate-700 dark:text-slate-200 placeholder-slate-400' onChange={e => setOtp(e.target.value)} value={otp} type="text" placeholder='Enter OTP' required />
                             </div>
                         )}
 
                         {/* Change Password fields */}
                         {state === 'Change Password' && (
                             <>
-                                <div className='border px-4 py-2 flex items-center gap-2 rounded-full mt-5 bg-gray-50'>
-                                    <img src={assets.lock_icon} alt="" />
-                                    <input className='outline-none text-sm w-full bg-transparent' onChange={e => setOldPassword(e.target.value)} value={oldPassword} type="password" placeholder='Temporary Password' required />
+                                <div className='border border-slate-200 dark:border-slate-600 px-4 py-3 flex items-center gap-3 rounded-xl mt-4 bg-white/50 dark:bg-slate-800/50 hover:border-royal-blue focus-within:border-royal-blue transition'>
+                                    <img src={assets.lock_icon} alt="" className="opacity-60 dark:invert" />
+                                    <input className='outline-none text-sm w-full bg-transparent text-slate-700 dark:text-slate-200 placeholder-slate-400' onChange={e => setOldPassword(e.target.value)} value={oldPassword} type="password" placeholder='Temporary Password' required />
                                 </div>
-                                <div className='border px-4 py-2 flex items-center gap-2 rounded-full mt-5 bg-gray-50'>
-                                    <img src={assets.lock_icon} alt="" />
-                                    <input className='outline-none text-sm w-full bg-transparent' onChange={e => setNewPassword(e.target.value)} value={newPassword} type="password" placeholder='New Password (min 8 chars)' required />
+                                <div className='border border-slate-200 dark:border-slate-600 px-4 py-3 flex items-center gap-3 rounded-xl mt-4 bg-white/50 dark:bg-slate-800/50 hover:border-royal-blue focus-within:border-royal-blue transition'>
+                                    <img src={assets.lock_icon} alt="" className="opacity-60 dark:invert" />
+                                    <input className='outline-none text-sm w-full bg-transparent text-slate-700 dark:text-slate-200 placeholder-slate-400' onChange={e => setNewPassword(e.target.value)} value={newPassword} type="password" placeholder='New Password (min 8 chars)' required />
                                 </div>
                             </>
                         )}
 
                         {/* Forgot password link */}
                         {state === 'Login' && (
-                            <p className='text-sm text-blue-600 mt-4 cursor-pointer hover:underline' onClick={() => setState('Forgot')}>
+                            <p className='text-sm text-royal-blue dark:text-blue-400 mt-4 cursor-pointer hover:underline font-medium text-right' onClick={() => setState('Forgot')}>
                                 Forgot Password?
                             </p>
                         )}
 
-                        <button type='submit' className='bg-blue-600 w-full text-white py-2.5 rounded-full mt-6 hover:bg-blue-700 transition font-medium disabled:opacity-50' disabled={loading}>
+                        <button type='submit' className='btn-royal w-full py-3 rounded-xl mt-8 font-semibold text-white tracking-wide disabled:opacity-50 disabled:cursor-not-allowed shadow-blue-500/30' disabled={loading}>
                             {getButtonText()}
                         </button>
                     </form>
 
                     {/* Toggle links */}
-                    <div className="mt-5 text-center">
+                    <div className="mt-6 text-center">
                         {state === 'Login' && (
-                            <p className="text-sm">Don't have an account? <span className="text-blue-600 cursor-pointer font-medium hover:underline" onClick={() => { setState('Sign Up'); setIsOtpSent(false); }}>Sign Up</span></p>
+                            <p className="text-sm text-slate-600 dark:text-slate-400">Don't have an account? <span className="text-royal-blue dark:text-blue-400 cursor-pointer font-bold hover:underline" onClick={() => { setState('Sign Up'); setIsOtpSent(false); }}>Sign Up</span></p>
                         )}
                         {state === 'Sign Up' && (
-                            <p className="text-sm">Already have an account? <span className="text-blue-600 cursor-pointer font-medium hover:underline" onClick={() => { setState('Login'); setIsOtpSent(false); }}>Login</span></p>
+                            <p className="text-sm text-slate-600 dark:text-slate-400">Already have an account? <span className="text-royal-blue dark:text-blue-400 cursor-pointer font-bold hover:underline" onClick={() => { setState('Login'); setIsOtpSent(false); }}>Login</span></p>
                         )}
                         {(state === 'Forgot' || state === 'Change Password') && (
-                            <p className="text-sm">Remember your password? <span className="text-blue-600 cursor-pointer font-medium hover:underline" onClick={() => setState('Login')}>Back to Login</span></p>
+                            <p className="text-sm text-slate-600 dark:text-slate-400">Remember your password? <span className="text-royal-blue dark:text-blue-400 cursor-pointer font-bold hover:underline" onClick={() => setState('Login')}>Back to Login</span></p>
                         )}
                     </div>
 

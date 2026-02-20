@@ -74,15 +74,56 @@ export const getAllStudents = async (req, res) => {
 // Update Student
 export const updateStudent = async (req, res) => {
     try {
-        const { userId, dept, cgpa, registerNumber, groups } = req.body;
+        const { userId, dept, cgpa, registerNumber, batch, branch } = req.body;
 
-        await User.findByIdAndUpdate(userId, {
-            dept,
-            cgpa,
-            registerNumber,
-        });
+        if (cgpa && (cgpa < 0 || cgpa > 10)) {
+            return res.json({ success: false, message: "CGPA must be between 0 and 10" });
+        }
+
+        const student = await User.findById(userId);
+        if (!student) return res.json({ success: false, message: "Student not found" });
+
+        // Reset verification if value changed
+        const updates = { dept, registerNumber };
+        const verifiedUpdates = {};
+
+        if (cgpa !== undefined && cgpa !== student.cgpa) {
+            updates.cgpa = cgpa;
+            verifiedUpdates['verifiedFields.cgpa'] = false;
+        }
+        if (batch !== undefined && batch !== student.batch) {
+            updates.batch = batch;
+            verifiedUpdates['verifiedFields.batch'] = false;
+        }
+        if (branch !== undefined && branch !== student.branch) {
+            updates.branch = branch;
+            verifiedUpdates['verifiedFields.branch'] = false;
+        }
+
+        await User.findByIdAndUpdate(userId, { ...updates, ...verifiedUpdates });
 
         res.json({ success: true, message: "Student Updated" });
+
+    } catch (error) {
+        res.json({ success: false, message: error.message });
+    }
+}
+
+// Verify Student Academic Field
+export const verifyStudentField = async (req, res) => {
+    try {
+        const { userId, field, verified } = req.body;
+
+        const allowedFields = ['cgpa', 'batch', 'branch'];
+        if (!allowedFields.includes(field)) {
+            return res.json({ success: false, message: "Invalid field" });
+        }
+
+        await User.findByIdAndUpdate(userId, {
+            [`verifiedFields.${field}`]: verified !== false
+        });
+
+        res.json({ success: true, message: `${field} ${verified !== false ? 'verified' : 'unverified'} successfully` });
 
     } catch (error) {
         res.json({ success: false, message: error.message });
@@ -111,6 +152,9 @@ export const getPlacementAnalytics = async (req, res) => {
         applications.forEach(app => {
             // Count statuses
             statusCounts[app.status] = (statusCounts[app.status] || 0) + 1;
+
+            // Safety check for deleted users
+            if (!app.userId) return;
 
             if (selectedStatuses.includes(app.status)) {
                 placedStudentIds.add(app.userId.toString());
@@ -248,6 +292,98 @@ export const getUnplacedStudents = async (req, res) => {
         }).select('-password');
 
         res.json({ success: true, unplacedStudents });
+
+    } catch (error) {
+        res.json({ success: false, message: error.message });
+    }
+}
+
+// Get Coordinator Profile
+export const getCoordinatorProfile = async (req, res) => {
+    try {
+        const token = req.headers.token;
+        if (!token) return res.json({ success: false, message: 'Not authorized' });
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await User.findById(decoded.id).select('-password');
+
+        if (!user || user.role !== 'coordinator') {
+            return res.json({ success: false, message: 'Coordinator not found' });
+        }
+
+        res.json({ success: true, coordinator: user });
+
+    } catch (error) {
+        res.json({ success: false, message: error.message });
+    }
+}
+
+// Update Coordinator Profile
+export const updateCoordinatorProfile = async (req, res) => {
+    try {
+        const token = req.headers.token;
+        if (!token) return res.json({ success: false, message: 'Not authorized' });
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await User.findById(decoded.id);
+
+        if (!user || user.role !== 'coordinator') {
+            return res.json({ success: false, message: 'Coordinator not found' });
+        }
+
+        const { name, phone, email, dept } = req.body;
+
+        if (name) user.name = name;
+        if (phone) user.phone = phone;
+        if (email) user.email = email;
+        if (dept) user.dept = dept;
+
+        await user.save();
+
+        res.json({
+            success: true,
+            message: 'Profile updated successfully',
+            coordinator: { _id: user._id, name: user.name, email: user.email, phone: user.phone, dept: user.dept, image: user.image, role: user.role }
+        });
+
+    } catch (error) {
+        res.json({ success: false, message: error.message });
+    }
+}
+
+// Change Coordinator Password
+export const changeCoordinatorPassword = async (req, res) => {
+    try {
+        const token = req.headers.token;
+        if (!token) return res.json({ success: false, message: 'Not authorized' });
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await User.findById(decoded.id).select('+password');
+
+        if (!user || user.role !== 'coordinator') {
+            return res.json({ success: false, message: 'Coordinator not found' });
+        }
+
+        const { currentPassword, newPassword } = req.body;
+
+        if (!currentPassword || !newPassword) {
+            return res.json({ success: false, message: 'Both current and new password are required' });
+        }
+
+        if (newPassword.length < 6) {
+            return res.json({ success: false, message: 'New password must be at least 6 characters' });
+        }
+
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) {
+            return res.json({ success: false, message: 'Current password is incorrect' });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(newPassword, salt);
+        await user.save();
+
+        res.json({ success: true, message: 'Password changed successfully' });
 
     } catch (error) {
         res.json({ success: false, message: error.message });

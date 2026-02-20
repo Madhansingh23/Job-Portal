@@ -84,7 +84,7 @@ const JobListing = () => {
 
     const activeFilterCount = selectedCategories.length + selectedLocations.length + selectedLevels.length + (timeFilter !== 'all' ? 1 : 0)
 
-    const jobsPerPage = 6
+    const jobsPerPage = 50
 
     return (
         <div className='container 2xl:px-20 mx-auto flex flex-col lg:flex-row max-lg:space-y-8 py-8'>

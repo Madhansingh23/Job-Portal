@@ -29,6 +29,11 @@ const userSchema = new mongoose.Schema({
     gender: { type: String },
     age: { type: Number },
 
+    // Academic Eligibility (Placement criteria)
+    tenthMarks: { type: Number },          // 10th percentage/CGPA
+    twelfthMarks: { type: Number },        // 12th percentage/CGPA
+    numberOfArrears: { type: Number, default: 0 }, // Current standing arrears
+
     // Groups (For constrained jobs)
     groups: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Group' }],
 
@@ -45,6 +50,16 @@ const userSchema = new mongoose.Schema({
     jobsApplied: [{ type: mongoose.Schema.Types.ObjectId, ref: 'JobApplication' }],
     acceptedOffers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Job' }],
     rejectedOffers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Job' }],
+
+    // Verified Fields (Coordinator verified)
+    verifiedFields: {
+        cgpa: { type: Boolean, default: false },
+        batch: { type: Boolean, default: false },
+        branch: { type: Boolean, default: false },
+        tenthMarks: { type: Boolean, default: false },
+        twelfthMarks: { type: Boolean, default: false },
+        numberOfArrears: { type: Boolean, default: false }
+    },
 
     // Profile Lock (Admin only edit)
     isProfileLocked: { type: Boolean, default: true }
