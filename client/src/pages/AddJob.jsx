@@ -16,6 +16,9 @@ const AddJob = () => {
 
     // New Constraints
     const [minCGPA, setMinCGPA] = useState(0);
+    const [minTenthMarks, setMinTenthMarks] = useState(0);
+    const [minTwelfthMarks, setMinTwelfthMarks] = useState(0);
+    const [maxArrears, setMaxArrears] = useState('');
     const [targetBatch, setTargetBatch] = useState('');
     const [eligibleDepts, setEligibleDepts] = useState([]);
     const [groups, setGroups] = useState([]);
@@ -50,7 +53,7 @@ const AddJob = () => {
             const description = quillRef.current.root.innerHTML
 
             const { data } = await axios.post(`${backendUrl}/api/company/post-job`,
-                { title, description, location, salary, category, level, minCGPA, targetBatch, eligibleDepts, eligibleGroups, rounds, offerType },
+                { title, description, location, salary, category, level, minCGPA, minTenthMarks: Number(minTenthMarks) || 0, minTwelfthMarks: Number(minTwelfthMarks) || 0, maxArrears: maxArrears !== '' ? Number(maxArrears) : 100, targetBatch, eligibleDepts, eligibleGroups, rounds, offerType },
                 { headers: { token: companyToken } }
             )
 

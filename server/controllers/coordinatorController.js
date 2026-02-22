@@ -39,7 +39,7 @@ export const coordinatorRegister = async (req, res) => {
 export const coordinatorLogin = async (req, res) => {
     try {
         const { email, password } = req.body;
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ email }).select('+password');
 
         if (!user || user.role !== 'coordinator') {
             return res.json({ success: false, message: "Invalid Coordinator Credentials" });
