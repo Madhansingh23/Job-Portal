@@ -4,7 +4,7 @@ import { toast } from 'react-toastify'
 import axios from 'axios'
 import { assets } from '../assets/assets'
 import * as XLSX from 'xlsx'
-import AnalyticsDashboard from '../components/AnalyticsDashboard'
+import AnalyticsDashboard from './AnalyticsDashboard'
 import Navbar from '../components/Navbar'
 
 const CoordinatorDashboard = () => {
@@ -246,19 +246,8 @@ const CoordinatorDashboard = () => {
     }
 
     return (
-        <div className='min-h-screen bg-gray-50 dark:bg-slate-900 transition-colors'>
+        <div className='min-h-screen bg-slate-50 dark:bg-slate-900 font-inter'>
             <Navbar />
-
-            {/* Page Title */}
-            <div className='bg-gradient-to-r from-blue-800 to-indigo-900 text-white px-6 lg:px-10 py-4 flex justify-between items-center'>
-                <div>
-                    <h1 className='text-xl font-bold tracking-tight'>Coordinator Dashboard</h1>
-                    <p className='text-blue-200 text-xs mt-0.5'>Campus Placement Management</p>
-                </div>
-                <a href='/coordinator-profile' className='flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-sm font-medium transition'>
-                    <span>👤</span> My Profile
-                </a>
-            </div>
 
             {/* Tabs */}
             <div className='bg-white dark:bg-slate-800 border-b dark:border-slate-700 px-6 lg:px-10 flex overflow-x-auto no-scrollbar gap-8'>

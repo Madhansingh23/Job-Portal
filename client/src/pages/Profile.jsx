@@ -194,14 +194,19 @@ const Profile = () => {
                     <div className='relative bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 shadow-xl rounded-2xl overflow-hidden'>
 
                         {/* Banner/Header */}
-                        <div className='h-32 bg-gradient-to-r from-blue-600 to-indigo-700'></div>
+                        <div className='h-40 md:h-52 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 relative overflow-hidden'>
+                            {/* Decorative Banner Elements */}
+                            <div className="absolute inset-0 pb-10" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.05' fill-rule='evenodd'%3E%3Ccircle cx='3' cy='3' r='3'/%3E%3Ccircle cx='13' cy='13' r='3'/%3E%3C/g%3E%3C/svg%3E")` }}></div>
+                            <div className='absolute -bottom-16 -left-16 w-64 h-64 bg-white/10 rounded-full blur-3xl'></div>
+                            <div className='absolute top-0 right-10 w-48 h-48 bg-purple-400/20 rounded-full blur-3xl'></div>
+                        </div>
 
-                        <div className='px-8 pb-12'>
+                        <div className='px-6 md:px-10 pb-12'>
                             {/* Profile Image & Key Info */}
-                            <div className='relative flex flex-col md:flex-row justify-between items-end -mt-12 md:-mt-16 mb-8 gap-6'>
-                                <div className='flex items-end gap-6'>
-                                    <label htmlFor='image-upload' className='relative cursor-pointer group'>
-                                        <div className='w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-lg bg-white group-hover:shadow-2xl transition duration-300'>
+                            <div className='relative flex flex-col md:flex-row justify-between items-start md:items-end -mt-16 md:-mt-24 mb-10 gap-6 md:gap-8'>
+                                <div className='flex flex-col md:flex-row items-start md:items-end gap-5 md:gap-6 z-10'>
+                                    <label htmlFor='image-upload' className='relative cursor-pointer group shrink-0'>
+                                        <div className='w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-[6px] border-white dark:border-slate-900 shadow-xl bg-white dark:bg-slate-800 group-hover:shadow-2xl transition-all duration-300 transform group-hover:-translate-y-1'>
                                             <img
                                                 className='w-full h-full object-cover bg-white dark:bg-slate-700'
                                                 src={image ? URL.createObjectURL(image) : userData.image}
@@ -274,18 +279,18 @@ const Profile = () => {
                             )}
 
                             {/* Main Grid */}
-                            <div className='grid grid-cols-1 lg:grid-cols-3 gap-8'>
+                            <div className='grid grid-cols-1 lg:grid-cols-2 gap-8'>
 
                                 {/* Left Column: Personal & Contact */}
-                                <div className='lg:col-span-2 space-y-8'>
+                                <div className='space-y-8'>
 
                                     {/* Personal Information */}
-                                    <section>
-                                        <h3 className='text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2'>
-                                            <span className='w-1 h-6 bg-blue-600 rounded-full'></span>
+                                    <section className='animate-fade-in group'>
+                                        <h3 className='text-lg font-bold text-gray-800 dark:text-white mb-5 flex items-center gap-2 tracking-tight'>
+                                            <span className='w-1.5 h-6 bg-gradient-to-b from-blue-500 to-blue-700 rounded-full shadow-sm'></span>
                                             Personal Information
                                         </h3>
-                                        <div className='grid grid-cols-1 md:grid-cols-2 gap-5 bg-gray-50/50 dark:bg-slate-800/30 p-6 rounded-xl border border-gray-100 dark:border-slate-700'>
+                                        <div className='grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50/80 dark:bg-slate-800/50 p-7 rounded-2xl border border-slate-100 dark:border-slate-700/60 shadow-sm transition-all duration-300 group-hover:shadow-md group-hover:bg-slate-50 dark:group-hover:bg-slate-800/70'>
                                             <div>
                                                 <label className='text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide block mb-1'>First Name</label>
                                                 <input type="text" value={firstName} onChange={e => setFirstName(e.target.value)} disabled={!isEdit} className={`w-full p-2.5 rounded-lg border ${isEdit ? 'bg-white dark:bg-slate-700 border-blue-200 dark:border-slate-600 focus:ring-2 focus:ring-blue-100' : 'bg-transparent border-transparent text-gray-800 dark:text-white font-medium'} outline-none transition`} />
@@ -308,61 +313,13 @@ const Profile = () => {
                                         </div>
                                     </section>
 
-                                    {/* Location & Preferences */}
-                                    <section>
-                                        <h3 className='text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2'>
-                                            <span className='w-1 h-6 bg-purple-600 rounded-full'></span>
-                                            Location & Preferences
-                                        </h3>
-                                        <div className='grid grid-cols-1 md:grid-cols-2 gap-5 bg-gray-50/50 dark:bg-slate-800/30 p-6 rounded-xl border border-gray-100 dark:border-slate-700'>
-                                            <div>
-                                                <label className='text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide block mb-1'>Current Location</label>
-                                                <input type="text" value={currentLocation} onChange={e => setCurrentLocation(e.target.value)} disabled={!isEdit} className={`w-full p-2.5 rounded-lg border ${isEdit ? 'bg-white dark:bg-slate-700 border-blue-200 dark:border-slate-600 focus:ring-2 focus:ring-blue-100' : 'bg-transparent border-transparent text-gray-800 dark:text-white font-medium'} outline-none transition`} />
-                                            </div>
-                                            <div>
-                                                <label className='text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide block mb-1'>Preferred Location</label>
-                                                <input type="text" value={preferredLocation} onChange={e => setPreferredLocation(e.target.value)} disabled={!isEdit} className={`w-full p-2.5 rounded-lg border ${isEdit ? 'bg-white dark:bg-slate-700 border-blue-200 dark:border-slate-600 focus:ring-2 focus:ring-blue-100' : 'bg-transparent border-transparent text-gray-800 dark:text-white font-medium'} outline-none transition`} />
-                                            </div>
-                                        </div>
-                                    </section>
-
-                                </div>
-
-                                {/* Right Column: Academic & Resume */}
-                                <div className='space-y-8'>
-
-                                    {/* Resume Section */}
-                                    <section className='bg-blue-50/50 dark:bg-blue-900/10 p-6 rounded-xl border border-blue-100 dark:border-blue-900/30'>
-                                        <h3 className='text-sm font-bold text-blue-800 dark:text-blue-400 uppercase tracking-wide mb-4'>Resume / CV</h3>
-                                        <div className='flex flex-col gap-3'>
-                                            {isEdit ? (
-                                                <div className='space-y-3'>
-                                                    <div className='bg-white dark:bg-slate-800 border-2 border-dashed border-blue-200 dark:border-blue-700 rounded-xl p-4 text-center hover:bg-blue-50 dark:hover:bg-slate-700/50 transition cursor-pointer relative group'>
-                                                        <input id='resume-upload' onChange={e => setResume(e.target.files[0])} type="file" className='absolute inset-0 opacity-0 cursor-pointer' accept="application/pdf" />
-                                                        <p className='text-sm text-blue-600 dark:text-blue-400 font-medium group-hover:scale-105 transition'>{resume ? resume.name : "Click to Upload New PDF"}</p>
-                                                    </div>
-                                                    {resume && (
-                                                        <button onClick={updateResume} className='w-full bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition shadow-sm'>Confirm Upload</button>
-                                                    )}
-                                                </div>
-                                            ) : (
-                                                userData.resume ? (
-                                                    <a href={userData.resume} target='_blank' rel="noreferrer" className='flex items-center justify-center gap-2 w-full bg-blue-600 text-white px-4 py-3 rounded-xl font-medium hover:bg-blue-700 transition shadow-lg shadow-blue-200 dark:shadow-none hover:-translate-y-0.5 transform'>
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" /><polyline points="14 2 14 8 20 8" /></svg>
-                                                        View Resume
-                                                    </a>
-                                                ) : <div className='p-4 text-center text-gray-400 text-sm bg-gray-100 dark:bg-slate-800 rounded-xl border dark:border-slate-700'>No Resume Uploaded</div>
-                                            )}
-                                        </div>
-                                    </section>
-
                                     {/* Academic Details — Read-only, with Change Request buttons */}
-                                    <section>
-                                        <h3 className='text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2'>
-                                            <span className='w-1 h-6 bg-green-600 rounded-full'></span>
+                                    <section className='animate-fade-in group delay-150'>
+                                        <h3 className='text-lg font-bold text-gray-800 dark:text-white mb-5 flex items-center gap-2 tracking-tight'>
+                                            <span className='w-1.5 h-6 bg-gradient-to-b from-green-500 to-green-700 rounded-full shadow-sm'></span>
                                             Academic Details
                                         </h3>
-                                        <div className='flex flex-col gap-4 bg-gray-50/50 dark:bg-slate-800/30 p-6 rounded-xl border border-gray-100 dark:border-slate-700'>
+                                        <div className='flex flex-col gap-5 bg-slate-50/80 dark:bg-slate-800/50 p-7 rounded-2xl border border-slate-100 dark:border-slate-700/60 shadow-sm transition-all duration-300 group-hover:shadow-md group-hover:bg-slate-50 dark:group-hover:bg-slate-800/70'>
 
                                             {/* Register Number & Dept (editable by student) */}
                                             <div>
@@ -452,6 +409,60 @@ const Profile = () => {
                                             </div>
                                         </div>
                                     </section>
+
+                                </div>
+
+                                {/* Right Column: Academic & Resume */}
+                                <div className='space-y-8'>
+
+                                    {/* Location & Preferences */}
+                                    <section className='animate-fade-in group delay-75'>
+                                        <h3 className='text-lg font-bold text-gray-800 dark:text-white mb-5 flex items-center gap-2 tracking-tight'>
+                                            <span className='w-1.5 h-6 bg-gradient-to-b from-purple-500 to-purple-700 rounded-full shadow-sm'></span>
+                                            Location & Preferences
+                                        </h3>
+                                        <div className='grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50/80 dark:bg-slate-800/50 p-7 rounded-2xl border border-slate-100 dark:border-slate-700/60 shadow-sm transition-all duration-300 group-hover:shadow-md group-hover:bg-slate-50 dark:group-hover:bg-slate-800/70'>
+                                            <div>
+                                                <label className='text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide block mb-1'>Current Location</label>
+                                                <input type="text" value={currentLocation} onChange={e => setCurrentLocation(e.target.value)} disabled={!isEdit} className={`w-full p-2.5 rounded-lg border ${isEdit ? 'bg-white dark:bg-slate-700 border-blue-200 dark:border-slate-600 focus:ring-2 focus:ring-blue-100' : 'bg-transparent border-transparent text-gray-800 dark:text-white font-medium'} outline-none transition`} />
+                                            </div>
+                                            <div>
+                                                <label className='text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide block mb-1'>Preferred Location</label>
+                                                <input type="text" value={preferredLocation} onChange={e => setPreferredLocation(e.target.value)} disabled={!isEdit} className={`w-full p-2.5 rounded-lg border ${isEdit ? 'bg-white dark:bg-slate-700 border-blue-200 dark:border-slate-600 focus:ring-2 focus:ring-blue-100' : 'bg-transparent border-transparent text-gray-800 dark:text-white font-medium'} outline-none transition`} />
+                                            </div>
+                                        </div>
+                                    </section>
+
+                                    {/* Resume Section */}
+                                    <section className='bg-gradient-to-br from-blue-50/80 to-indigo-50/50 dark:from-blue-900/20 dark:to-indigo-900/10 p-7 rounded-2xl border border-blue-100 dark:border-blue-900/30 shadow-sm hover:shadow-md transition-all duration-300 group relative overflow-hidden'>
+                                        {/* Decorative blob */}
+                                        <div className='absolute -right-6 -bottom-6 w-24 h-24 bg-blue-400/10 rounded-full blur-xl group-hover:bg-blue-400/20 transition-all'></div>
+                                        <h3 className='text-sm font-extrabold text-blue-800 dark:text-blue-400 flex items-center gap-2 uppercase tracking-wider mb-5'>
+                                            <span className='text-lg'>📄</span> Resume / CV
+                                        </h3>
+                                        <div className='flex flex-col gap-3 relative z-10'>
+                                            {isEdit ? (
+                                                <div className='space-y-3'>
+                                                    <div className='bg-white dark:bg-slate-800 border-2 border-dashed border-blue-200 dark:border-blue-700 rounded-xl p-4 text-center hover:bg-blue-50 dark:hover:bg-slate-700/50 transition cursor-pointer relative group'>
+                                                        <input id='resume-upload' onChange={e => setResume(e.target.files[0])} type="file" className='absolute inset-0 opacity-0 cursor-pointer' accept="application/pdf" />
+                                                        <p className='text-sm text-blue-600 dark:text-blue-400 font-medium group-hover:scale-105 transition'>{resume ? resume.name : "Click to Upload New PDF"}</p>
+                                                    </div>
+                                                    {resume && (
+                                                        <button onClick={updateResume} className='w-full bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition shadow-sm'>Confirm Upload</button>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                userData.resume ? (
+                                                    <a href={userData.resume} target='_blank' rel="noreferrer" className='flex items-center justify-center gap-2 w-full bg-blue-600 text-white px-4 py-3 rounded-xl font-medium hover:bg-blue-700 transition shadow-lg shadow-blue-200 dark:shadow-none hover:-translate-y-0.5 transform'>
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" /><polyline points="14 2 14 8 20 8" /></svg>
+                                                        View Resume
+                                                    </a>
+                                                ) : <div className='p-4 text-center text-gray-400 text-sm bg-gray-100 dark:bg-slate-800 rounded-xl border dark:border-slate-700'>No Resume Uploaded</div>
+                                            )}
+                                        </div>
+                                    </section>
+
+
 
                                 </div>
 

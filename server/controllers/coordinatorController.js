@@ -3,11 +3,22 @@ import Job from "../models/Job.js";
 import JobApplication from "../models/JobApplication.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
+import Otp from "../models/Otp.js";
 
 // Coordinator Register
 export const coordinatorRegister = async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        const { name, email, password, otp } = req.body;
+
+        if (!name || !email || !password || !otp) {
+            return res.json({ success: false, message: "Missing Details" });
+        }
+
+        // Verify OTP first
+        const validOtp = await Otp.findOne({ email, otp });
+        if (!validOtp) {
+            return res.json({ success: false, message: "Invalid or Expired OTP" });
+        }
 
         // Check if already exists
         const existingUser = await User.findOne({ email });
@@ -27,6 +38,9 @@ export const coordinatorRegister = async (req, res) => {
         });
 
         const token = jwt.sign({ id: user._id, role: 'coordinator' }, process.env.JWT_SECRET, { expiresIn: '1d' });
+
+        // Delete used OTP
+        await Otp.deleteMany({ email });
 
         res.json({ success: true, token, user: { name: user.name, role: 'coordinator' } });
 

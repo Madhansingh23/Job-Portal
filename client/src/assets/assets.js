@@ -1,4 +1,5 @@
-import logo from "./logo.jpg";
+import logo from "./psna.png";
+import psna_logo from "./psna.png";
 import search_icon from "./search_icon.svg";
 import company_icon from "./company_icon.svg";
 import microsoft_logo from "./microsoft_logo.svg";
@@ -36,6 +37,7 @@ import amazon_logo from './amazon_logo.png'
 
 export const assets = {
     logo,
+    psna_logo,
     search_icon,
     cross_icon,
     upload_area,

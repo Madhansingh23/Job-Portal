@@ -58,7 +58,7 @@ const Dashboard = () => {
                         <button onClick={() => setSidebarOpen(!sidebarOpen)} className='lg:hidden p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition'>
                             <svg className="w-5 h-5 text-slate-600 dark:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                         </button>
-                        <img onClick={() => navigate('/')} className='w-28 sm:w-32 cursor-pointer hover:opacity-80 transition-opacity' src={assets.logo} alt="Logo" />
+                        <img onClick={() => navigate('/')} className='h-8 sm:h-10 object-contain cursor-pointer hover:opacity-80 transition-opacity' src={assets.logo} alt="Logo" />
                     </div>
 
                     {/* Right: Theme Toggle + Company Info */}
@@ -82,13 +82,17 @@ const Dashboard = () => {
                                     <div className='w-10 h-10 rounded-xl overflow-hidden border-2 border-slate-200 dark:border-slate-600 cursor-pointer hover:border-blue-400 transition-colors shadow-sm'>
                                         <img className='w-full h-full object-cover' src={companyData.image} alt="" />
                                     </div>
-                                    <div className='absolute hidden group-hover:block top-12 right-0 z-50 min-w-[180px]'>
+                                    <div className='absolute hidden group-hover:block top-10 pt-2 right-0 z-50 min-w-[180px]'>
                                         <div className='bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xl py-2 mt-1'>
                                             <div className='px-4 py-2 border-b border-slate-100 dark:border-slate-700 sm:hidden'>
                                                 <p className='text-sm font-bold text-slate-700 dark:text-white'>{companyData.name}</p>
                                                 <p className='text-xs text-slate-400'>Recruiter</p>
                                             </div>
-                                            <button onClick={logout} className='w-full px-4 py-2.5 text-left text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition flex items-center gap-2'>
+                                            <button onClick={() => navigate('/dashboard/profile')} className='w-full px-4 py-2.5 text-left text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition flex items-center gap-2 font-medium'>
+                                                <span>👤</span>
+                                                My Profile
+                                            </button>
+                                            <button onClick={logout} className='w-full px-4 py-2.5 text-left text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition flex items-center gap-2 font-medium'>
                                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                                                 Logout
                                             </button>

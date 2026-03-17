@@ -96,61 +96,75 @@ const Applications = () => {
         <div className='grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10'>
 
           {/* Welcome / Stats Card */}
-          <div className='lg:col-span-2 bg-gradient-to-r from-royal-blue to-indigo-700 rounded-2xl p-8 text-white shadow-xl relative overflow-hidden group'>
-            <div className='absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-16 -mt-16 blur-3xl pointer-events-none group-hover:scale-110 transition-transform duration-700'></div>
-            <h1 className='text-3xl font-bold mb-2 relative z-10'>My Applications</h1>
-            <p className='text-blue-100 mb-6 max-w-xl relative z-10'>Track your job application status and manage your resume here.</p>
-
-            <div className='flex items-center gap-6 relative z-10'>
-              <div className='bg-white/20 backdrop-blur-md rounded-lg px-5 py-3 border border-white/10 hover:bg-white/30 transition-colors'>
-                <span className='block text-2xl font-bold'>{userApplications.length}</span>
-                <span className='text-xs text-blue-100 uppercase tracking-wider'>Applied</span>
-              </div>
-              <div className='bg-white/20 backdrop-blur-md rounded-lg px-5 py-3 border border-white/10 hover:bg-white/30 transition-colors'>
-                <span className='block text-2xl font-bold'>
-                  {userApplications.filter(job => job.status === 'Selected').length}
+          <div className='lg:col-span-2 relative bg-slate-900 rounded-[2rem] p-8 md:p-10 text-white shadow-2xl overflow-hidden group animate-slide-up'>
+            <div className='absolute inset-0 bg-gradient-to-br from-blue-600 to-indigo-900 opacity-90'></div>
+            <div className='absolute -top-24 -right-24 w-96 h-96 bg-blue-400 rounded-full mix-blend-overlay filter blur-[80px] opacity-20 group-hover:scale-110 transition-transform duration-[2s]'></div>
+            
+            <div className='relative z-10'>
+                <span className='inline-block px-3 py-1 rounded-full bg-white/10 border border-white/20 text-blue-100 text-[10px] font-black uppercase tracking-[0.2em] mb-4'>
+                    Application Tracking
                 </span>
-                <span className='text-xs text-blue-100 uppercase tracking-wider'>Selected</span>
-              </div>
+                <h1 className='text-4xl md:text-5xl font-black mb-2 tracking-tight'>Career Journey</h1>
+                <p className='text-blue-100/70 mb-8 max-w-xl font-medium'>Monitor your recruitment progress and manage your professional credentials in one place.</p>
+
+                <div className='flex flex-wrap items-center gap-4'>
+                  <div className='bg-white/10 backdrop-blur-xl rounded-2xl px-6 py-4 border border-white/10 hover:bg-white/20 transition-all group/stat'>
+                    <span className='block text-3xl font-black group-hover:scale-110 transition-transform'>{userApplications.length}</span>
+                    <span className='text-[10px] text-blue-200 font-black uppercase tracking-widest'>Total Applied</span>
+                  </div>
+                  <div className='bg-emerald-500/20 backdrop-blur-xl rounded-2xl px-6 py-4 border border-emerald-400/20 hover:bg-emerald-500/30 transition-all group/stat'>
+                    <span className='block text-3xl font-black text-emerald-300 group-hover:scale-110 transition-transform'>
+                      {userApplications.filter(job => job.status === 'Selected' || job.status === 'Accepted').length}
+                    </span>
+                    <span className='text-[10px] text-emerald-300/70 font-black uppercase tracking-widest'>Offers Received</span>
+                  </div>
+                </div>
             </div>
           </div>
 
           {/* Resume Card */}
-          <div className='glass-card p-6 rounded-2xl flex flex-col justify-center border border-slate-100 dark:border-slate-700 shadow-lg'>
-            <div className='flex items-center gap-3 mb-4'>
-              <div className='w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-royal-blue dark:text-blue-400'>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 011.414.586l5.414 5.414a1 1 0 01.586 1.414V19a2 2 0 01-2 2z"></path></svg>
+          <div className='glass-card p-8 rounded-[2rem] flex flex-col justify-center border-none shadow-2xl shadow-blue-500/5 animate-slide-up hover:shadow-blue-500/10 transition-all' style={{animationDelay: '100ms'}}>
+            <div className='flex items-center gap-4 mb-6'>
+              <div className='w-12 h-12 rounded-2xl bg-blue-600/10 flex items-center justify-center text-blue-600'>
+                <span className='text-2xl'>📄</span>
               </div>
-              <h2 className='text-lg font-bold text-slate-800 dark:text-white'>Resume</h2>
+              <div>
+                <h2 className='text-lg font-black text-slate-800 dark:text-white leading-none'>Resume</h2>
+                <p className='text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1'>Main Document</p>
+              </div>
             </div>
 
-            {isEdit || (userData && userData.resume === "") ? (
-              <div className='space-y-3 animate-fade-in'>
-                <label className='flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-blue-300 dark:border-blue-700 rounded-lg cursor-pointer bg-blue-50/50 dark:bg-slate-800/50 hover:bg-blue-50 dark:hover:bg-slate-800 transition'>
-                  <div className='flex flex-col items-center justify-center pt-5 pb-6'>
-                    <svg className="w-8 h-8 mb-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-                    <p className='text-sm text-slate-500 font-medium'>{resume ? resume.name : "Click to upload PDF"}</p>
+            {isEdit || (userData && (userData.resume === "" || !userData.resume)) ? (
+              <div className='space-y-4 animate-fade-in'>
+                <label className='flex flex-col items-center justify-center w-full h-36 rounded-[1.5rem] cursor-pointer bg-slate-50 dark:bg-slate-800/50 border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-blue-500/50 hover:bg-white dark:hover:bg-slate-800 transition-all group overflow-hidden relative'>
+                  <div className='flex flex-col items-center justify-center relative z-10'>
+                    <div className='w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform'>
+                        <span className='text-xl'>📤</span>
+                    </div>
+                    <p className='text-[10px] font-black uppercase tracking-widest text-slate-500'>{resume ? resume.name : "Upload PDF Resume"}</p>
                   </div>
                   <input onChange={e => setResume(e.target.files[0])} accept='application/pdf' type="file" hidden />
                 </label>
-                <div className='flex gap-2'>
-                  <button onClick={() => setIsEdit(false)} className='flex-1 py-2 rounded-lg border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 text-sm font-medium transition'>Cancel</button>
-                  <button onClick={updateResume} disabled={!resume} className='flex-1 py-2 rounded-lg bg-royal-blue text-white hover:bg-blue-700 text-sm font-medium disabled:opacity-50 transition shadow-md shadow-blue-200 dark:shadow-none'>Save Resume</button>
+                <div className='flex gap-3'>
+                  <button onClick={() => setIsEdit(false)} className='flex-1 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-slate-800 transition'>Cancel</button>
+                  <button onClick={updateResume} disabled={!resume} className='flex-1 py-3 rounded-xl bg-slate-900 dark:bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest disabled:opacity-30 hover:shadow-xl hover:shadow-blue-500/20 transition-all'>Save</button>
                 </div>
               </div>
             ) : (
-              <div className='bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4 border border-slate-100 dark:border-slate-700'>
-                <div className='flex items-center justify-between mb-4'>
-                  <span className='text-sm text-slate-500 dark:text-slate-400 font-medium truncate max-w-[150px]'>{userData.resume.split('/').pop()}</span>
-                  <span className='text-[10px] font-bold bg-green-100 text-green-700 px-2 py-0.5 rounded-full'>ACTIVE</span>
+              <div className='bg-slate-50/50 dark:bg-slate-900/50 rounded-2xl p-5 border border-slate-100 dark:border-slate-800'>
+                <div className='flex items-center justify-between mb-6'>
+                  <div className='flex flex-col'>
+                    <span className='text-xs font-bold text-slate-700 dark:text-slate-200 truncate max-w-[140px]'>{userData.resume.split('/').pop().slice(-20)}</span>
+                    <span className='text-[10px] font-black text-emerald-500 uppercase tracking-widest mt-1'>Verified Active</span>
+                  </div>
+                  <div className='w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500 text-xs'>✓</div>
                 </div>
-                <div className='flex gap-2'>
-                  <a target='_blank' href={userData.resume} rel="noreferrer" className='flex-1 text-center py-2.5 rounded-lg bg-royal-blue text-white hover:bg-blue-700 text-sm font-medium transition shadow-md shadow-blue-200 dark:shadow-none flex items-center justify-center gap-2'>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                    View
+                <div className='flex gap-3'>
+                  <a target='_blank' href={userData.resume} rel="noreferrer" className='flex-1 flex items-center justify-center gap-2 py-3 bg-slate-900 dark:bg-slate-800 text-white dark:text-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-black transition-colors'>
+                    View File
                   </a>
-                  <button onClick={() => setIsEdit(true)} className='px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 hover:shadow-sm text-sm font-medium transition'>
-                    Update
+                  <button onClick={() => setIsEdit(true)} className='px-4 py-3 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 rounded-xl text-[10px] font-black uppercase tracking-widest hover:shadow-md transition-all'>
+                    Edit
                   </button>
                 </div>
               </div>

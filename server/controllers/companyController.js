@@ -5,19 +5,26 @@ import generateToken from "../utils/generateToken.js";
 import Job from "../models/Job.js";
 import JobApplication from "../models/JobApplication.js";
 import Group from "../models/Group.js";
+import Otp from "../models/Otp.js";
 
 // Register a new company
 export const registerCompany = async (req, res) => {
 
-    const { name, email, password } = req.body
+    const { name, email, password, otp } = req.body
 
     const imageFile = req.file;
 
-    if (!name || !email || !password || !imageFile) {
+    if (!name || !email || !password || !imageFile || !otp) {
         return res.json({ success: false, message: "Missing Details" })
     }
 
     try {
+
+        // Verify OTP first
+        const validOtp = await Otp.findOne({ email, otp });
+        if (!validOtp) {
+            return res.json({ success: false, message: "Invalid or Expired OTP" });
+        }
 
         const companyExists = await Company.findOne({ email })
 
@@ -47,6 +54,9 @@ export const registerCompany = async (req, res) => {
             },
             token: generateToken(company._id)
         })
+
+        // Delete used OTP
+        await Otp.deleteMany({ email });
 
     } catch (error) {
         res.json({ success: false, message: error.message })
@@ -388,6 +398,86 @@ export const changeCompanyPassword = async (req, res) => {
         }
 
         const isMatch = await bcrypt.compare(currentPassword, company.password)
+        if (!isMatch) {
+            return res.json({ success: false, message: 'Current password is incorrect' })
+        }
+
+        const salt = await bcrypt.genSalt(10)
+        company.password = await bcrypt.hash(newPassword, salt)
+        await company.save()
+
+        res.json({ success: true, message: 'Password changed successfully' })
+
+    } catch (error) {
+        res.json({ success: false, message: error.message })
+    }
+}
+
+// Forgot Company Password (Public - sends temp password via email)
+export const forgotCompanyPassword = async (req, res) => {
+    try {
+        const { email } = req.body
+
+        if (!email) {
+            return res.json({ success: false, message: 'Email is required' })
+        }
+
+        const company = await Company.findOne({ email })
+        if (!company) {
+            return res.json({ success: false, message: 'No company found with that email' })
+        }
+
+        // Generate a temporary password
+        const tempPassword = Math.random().toString(36).slice(-10) + 'A1!'
+        const salt = await bcrypt.genSalt(10)
+        company.password = await bcrypt.hash(tempPassword, salt)
+        await company.save()
+
+        // Send email with temp password
+        const nodemailer = (await import('nodemailer')).default
+        const transporter = nodemailer.createTransport({
+            host: process.env.SMTP_HOST || 'smtp.gmail.com',
+            port: parseInt(process.env.SMTP_PORT || '587'),
+            secure: false,
+            auth: {
+                user: process.env.SMTP_USER,
+                pass: process.env.SMTP_PASS
+            }
+        })
+
+        await transporter.sendMail({
+            from: process.env.SMTP_USER,
+            to: email,
+            subject: 'Job Portal - Company Password Reset',
+            html: `<h3>Your temporary password</h3><p>Use this temporary password to login and then change your password:</p><p style="font-size:18px;font-weight:bold;background:#f0f0f0;padding:10px;border-radius:5px;">${tempPassword}</p><p>This password will work immediately. Please change it after logging in.</p>`
+        })
+
+        res.json({ success: true, message: 'Temporary password sent to your email' })
+
+    } catch (error) {
+        res.json({ success: false, message: error.message })
+    }
+}
+
+// Change Company Password (Public - using temp password)
+export const changeCompanyPasswordPublic = async (req, res) => {
+    try {
+        const { email, oldPassword, newPassword } = req.body
+
+        if (!email || !oldPassword || !newPassword) {
+            return res.json({ success: false, message: 'All fields are required' })
+        }
+
+        if (newPassword.length < 6) {
+            return res.json({ success: false, message: 'New password must be at least 6 characters' })
+        }
+
+        const company = await Company.findOne({ email })
+        if (!company) {
+            return res.json({ success: false, message: 'Company not found' })
+        }
+
+        const isMatch = await bcrypt.compare(oldPassword, company.password)
         if (!isMatch) {
             return res.json({ success: false, message: 'Current password is incorrect' })
         }

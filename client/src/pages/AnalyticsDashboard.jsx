@@ -11,13 +11,13 @@ import {
 const COLORS = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
 
 const StatCard = ({ label, value, icon, color, sub }) => (
-    <div className={`bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition`}>
+    <div className={`bg-white dark:bg-slate-800 rounded-xl p-5 shadow-sm border border-gray-100 dark:border-slate-700/50 hover:shadow-md transition`}>
         <div className='flex items-center justify-between mb-2'>
             <span className='text-3xl'>{icon}</span>
             <span className={`text-2xl font-bold ${color}`}>{value}</span>
         </div>
-        <p className='text-sm text-gray-600 font-medium'>{label}</p>
-        {sub && <p className='text-xs text-gray-400 mt-1'>{sub}</p>}
+        <p className='text-sm text-gray-600 dark:text-slate-300 font-medium'>{label}</p>
+        {sub && <p className='text-xs text-gray-400 dark:text-slate-500 mt-1'>{sub}</p>}
     </div>
 );
 
@@ -79,8 +79,8 @@ const AnalyticsDashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                 {/* Placed vs Unplaced */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <h3 className="text-lg font-semibold mb-4 text-gray-700">Placement Status</h3>
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700/50">
+                    <h3 className="text-lg font-semibold mb-4 text-gray-700 dark:text-gray-200">Placement Status</h3>
                     <div className="h-72">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
@@ -105,15 +105,18 @@ const AnalyticsDashboard = () => {
                 </div>
 
                 {/* Offer Distribution */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <h3 className="text-lg font-semibold mb-4 text-gray-700">Offer Distribution</h3>
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700/50">
+                    <h3 className="text-lg font-semibold mb-4 text-gray-700 dark:text-gray-200">Offer Distribution</h3>
                     <div className="h-72">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={offerDistribution}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                                <YAxis />
-                                <Tooltip />
+                                <CartesianGrid strokeDasharray="3 3" stroke="#cbd5e1" opacity={0.5} />
+                                <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#64748b' }} axisLine={{ stroke: '#cbd5e1' }} tickLine={{ stroke: '#cbd5e1' }} />
+                                <YAxis tick={{ fill: '#64748b' }} axisLine={{ stroke: '#cbd5e1' }} tickLine={{ stroke: '#cbd5e1' }} />
+                                <Tooltip
+                                    contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.9)', borderColor: '#334155', color: '#fff', borderRadius: '8px' }}
+                                    itemStyle={{ color: '#e2e8f0' }}
+                                />
                                 <Bar dataKey="value" fill="#8b5cf6" radius={[6, 6, 0, 0]} />
                             </BarChart>
                         </ResponsiveContainer>
@@ -126,16 +129,19 @@ const AnalyticsDashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                 {/* Department-wise Placement */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <h3 className="text-lg font-semibold mb-4 text-gray-700">Department-wise Placement</h3>
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700/50">
+                    <h3 className="text-lg font-semibold mb-4 text-gray-700 dark:text-gray-200">Department-wise Placement</h3>
                     {deptWise.length > 0 ? (
                         <div className="h-72">
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={deptWise} layout="vertical">
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                                    <XAxis type="number" />
-                                    <YAxis dataKey="dept" type="category" tick={{ fontSize: 11 }} width={80} />
-                                    <Tooltip />
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#cbd5e1" opacity={0.5} />
+                                    <XAxis type="number" tick={{ fill: '#64748b' }} axisLine={{ stroke: '#cbd5e1' }} tickLine={{ stroke: '#cbd5e1' }} />
+                                    <YAxis dataKey="dept" type="category" tick={{ fontSize: 11, fill: '#64748b' }} width={80} axisLine={{ stroke: '#cbd5e1' }} tickLine={{ stroke: '#cbd5e1' }} />
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.9)', borderColor: '#334155', color: '#fff', borderRadius: '8px' }}
+                                        itemStyle={{ color: '#e2e8f0' }}
+                                    />
                                     <Legend />
                                     <Bar dataKey="placed" name="Placed" fill="#10b981" stackId="a" radius={[0, 0, 0, 0]} />
                                     <Bar dataKey="unplaced" name="Unplaced" fill="#ef4444" stackId="a" radius={[0, 6, 6, 0]} />
@@ -148,16 +154,19 @@ const AnalyticsDashboard = () => {
                 </div>
 
                 {/* Top Recruiters */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <h3 className="text-lg font-semibold mb-4 text-gray-700">Top Recruiting Companies</h3>
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700/50">
+                    <h3 className="text-lg font-semibold mb-4 text-gray-700 dark:text-gray-200">Top Recruiting Companies</h3>
                     {topCompanies.length > 0 ? (
                         <div className="h-72">
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={topCompanies}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                                    <XAxis dataKey="name" tick={{ fontSize: 11 }} angle={-20} textAnchor="end" height={60} />
-                                    <YAxis />
-                                    <Tooltip />
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#cbd5e1" opacity={0.5} />
+                                    <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} angle={-20} textAnchor="end" height={60} axisLine={{ stroke: '#cbd5e1' }} tickLine={{ stroke: '#cbd5e1' }} />
+                                    <YAxis tick={{ fill: '#64748b' }} axisLine={{ stroke: '#cbd5e1' }} tickLine={{ stroke: '#cbd5e1' }} />
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.9)', borderColor: '#334155', color: '#fff', borderRadius: '8px' }}
+                                        itemStyle={{ color: '#e2e8f0' }}
+                                    />
                                     <Bar dataKey="offers" fill="#3b82f6" radius={[6, 6, 0, 0]} />
                                 </BarChart>
                             </ResponsiveContainer>
@@ -170,8 +179,8 @@ const AnalyticsDashboard = () => {
 
             {/* Row 3: Monthly Trends */}
             {monthlyTrends.length > 0 && (
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <h3 className="text-lg font-semibold mb-4 text-gray-700">Monthly Placement Trends</h3>
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700/50">
+                    <h3 className="text-lg font-semibold mb-4 text-gray-700 dark:text-gray-200">Monthly Placement Trends</h3>
                     <div className="h-72">
                         <ResponsiveContainer width="100%" height="100%">
                             <AreaChart data={monthlyTrends}>
@@ -181,10 +190,13 @@ const AnalyticsDashboard = () => {
                                         <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                                     </linearGradient>
                                 </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                                <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                                <YAxis />
-                                <Tooltip />
+                                <CartesianGrid strokeDasharray="3 3" stroke="#cbd5e1" opacity={0.5} />
+                                <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#64748b' }} axisLine={{ stroke: '#cbd5e1' }} tickLine={{ stroke: '#cbd5e1' }} />
+                                <YAxis tick={{ fill: '#64748b' }} axisLine={{ stroke: '#cbd5e1' }} tickLine={{ stroke: '#cbd5e1' }} />
+                                <Tooltip
+                                    contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.9)', borderColor: '#334155', color: '#fff', borderRadius: '8px' }}
+                                    itemStyle={{ color: '#e2e8f0' }}
+                                />
                                 <Area type="monotone" dataKey="placements" stroke="#3b82f6" fill="url(#colorPlacements)" strokeWidth={2} />
                             </AreaChart>
                         </ResponsiveContainer>
@@ -194,8 +206,8 @@ const AnalyticsDashboard = () => {
 
             {/* Row 4: Application Status Breakdown */}
             {statusBreakdown.length > 0 && (
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <h3 className="text-lg font-semibold mb-4 text-gray-700">Application Status Breakdown</h3>
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700/50">
+                    <h3 className="text-lg font-semibold mb-4 text-gray-700 dark:text-gray-200">Application Status Breakdown</h3>
                     <div className="h-72">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
@@ -221,22 +233,22 @@ const AnalyticsDashboard = () => {
 
             {/* Department Table */}
             {deptWise.length > 0 && (
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <h3 className="text-lg font-semibold mb-4 text-gray-700">Department Summary</h3>
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700/50">
+                    <h3 className="text-lg font-semibold mb-4 text-gray-700 dark:text-gray-200">Department Summary</h3>
                     <div className='overflow-x-auto'>
-                        <table className='w-full text-sm'>
-                            <thead className='bg-gray-50'>
+                        <table className='w-full text-sm text-gray-800 dark:text-slate-300'>
+                            <thead className='bg-gray-50 dark:bg-slate-700/50'>
                                 <tr>
-                                    <th className='text-left px-4 py-3 font-medium text-gray-600'>Department</th>
-                                    <th className='text-center px-4 py-3 font-medium text-gray-600'>Total</th>
-                                    <th className='text-center px-4 py-3 font-medium text-gray-600'>Placed</th>
-                                    <th className='text-center px-4 py-3 font-medium text-gray-600'>Unplaced</th>
-                                    <th className='text-center px-4 py-3 font-medium text-gray-600'>Rate</th>
+                                    <th className='text-left px-4 py-3 font-medium text-gray-600 dark:text-slate-300'>Department</th>
+                                    <th className='text-center px-4 py-3 font-medium text-gray-600 dark:text-slate-300'>Total</th>
+                                    <th className='text-center px-4 py-3 font-medium text-gray-600 dark:text-slate-300'>Placed</th>
+                                    <th className='text-center px-4 py-3 font-medium text-gray-600 dark:text-slate-300'>Unplaced</th>
+                                    <th className='text-center px-4 py-3 font-medium text-gray-600 dark:text-slate-300'>Rate</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {deptWise.map((d, i) => (
-                                    <tr key={i} className='border-b hover:bg-gray-50'>
+                                    <tr key={i} className='border-b dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700/50'>
                                         <td className='px-4 py-3 font-medium'>{d.dept}</td>
                                         <td className='px-4 py-3 text-center'>{d.total}</td>
                                         <td className='px-4 py-3 text-center text-green-600 font-medium'>{d.placed}</td>

@@ -8,9 +8,9 @@ const Footer = () => {
 
         {/* Brand Section */}
         <div className="col-span-1 md:col-span-2">
-          <img className="h-8 mb-4 brightness-0 invert" src={assets.logo} alt="Logo" />
+
           <p className="text-sm leading-relaxed max-w-sm mb-6 text-slate-400">
-            Bridging the gap between talent and opportunity. The most trusted campus recruitment platform for students and recruiters.
+            Empowering students to achieve their career aspirations. The official campus recruitment portal connecting bright minds with industry leaders.
           </p>
           <div className="flex gap-4">
             <img className="h-8 hover:scale-110 transition cursor-pointer" src={assets.facebook_icon} alt="Facebook" />
@@ -21,28 +21,28 @@ const Footer = () => {
 
         {/* Quick Links */}
         <div>
-          <h3 className="text-white font-semibold mb-4">Platform</h3>
+          <h3 className="text-white font-semibold mb-4">University</h3>
           <ul className="space-y-2 text-sm">
-            <li><a href="#" className="hover:text-blue-400 transition">Find Jobs</a></li>
-            <li><a href="#" className="hover:text-blue-400 transition">Recruiters</a></li>
-            <li><a href="#" className="hover:text-blue-400 transition">About Us</a></li>
-            <li><a href="#" className="hover:text-blue-400 transition">Contact</a></li>
+            <li><a href="#" className="hover:text-blue-400 transition">Placement Policy</a></li>
+            <li><a href="#" className="hover:text-blue-400 transition">Student Guidelines</a></li>
+            <li><a href="#" className="hover:text-blue-400 transition">Past Recruiters</a></li>
+            <li><a href="#" className="hover:text-blue-400 transition">Contact Training & Placement</a></li>
           </ul>
         </div>
 
         {/* Legal */}
         <div>
-          <h3 className="text-white font-semibold mb-4">Legal</h3>
+          <h3 className="text-white font-semibold mb-4">Resources & Support</h3>
           <ul className="space-y-2 text-sm">
-            <li><a href="#" className="hover:text-blue-400 transition">Privacy Policy</a></li>
-            <li><a href="#" className="hover:text-blue-400 transition">Terms of Service</a></li>
-            <li><a href="#" className="hover:text-blue-400 transition">Cookie Policy</a></li>
+            <li><a href="#" className="hover:text-blue-400 transition">Resume Building Guide</a></li>
+            <li><a href="#" className="hover:text-blue-400 transition">Interview Preparation</a></li>
+            <li><a href="#" className="hover:text-blue-400 transition">Alumni Network</a></li>
           </ul>
         </div>
       </div>
 
       <div className="border-t border-slate-800 mt-10 pt-6 text-center text-xs text-slate-500">
-        &copy; {new Date().getFullYear()} CampusRecruit. All rights reserved. Designed with ❤️ by Madhan Singh.
+        &copy; {new Date().getFullYear()} University Placement Cell. All rights reserved. Designed with ❤️ by Madhan Singh.
       </div>
     </footer>
   );

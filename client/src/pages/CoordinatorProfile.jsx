@@ -6,7 +6,7 @@ import Navbar from '../components/Navbar'
 const CoordinatorProfile = () => {
 
     const backendUrl = (import.meta.env.VITE_BACKEND_URL || '').replace(/^['"]|['"]$/g, '').replace(/\/+$/, '')
-    const token = localStorage.getItem('coordinatorToken')
+    const token = localStorage.getItem('token')
 
     const [coordinator, setCoordinator] = useState(null)
     const [isEdit, setIsEdit] = useState(false)

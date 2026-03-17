@@ -43,14 +43,9 @@ const Navbar = () => {
         <nav className='glass-card sticky top-0 z-50 transition-all duration-300 border-none rounded-none'>
             <div className='container px-4 2xl:px-20 mx-auto flex justify-between items-center h-20'>
 
-                {/* Left: Back + Logo */}
+                {/* Left: Logo */}
                 <div className='flex items-center gap-4'>
-                    {!isHome && (
-                        <button onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/')} className='flex items-center justify-center w-10 h-10 rounded-full bg-slate-100 hover:bg-royal-blue hover:text-white text-slate-500 transition shadow-sm' title='Go back'>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
-                        </button>
-                    )}
-                    <img onClick={() => navigate('/')} className='cursor-pointer h-10 sm:h-12 object-contain hover:opacity-90 transition' src={assets.logo} alt="2MK Jobs" />
+                    <img onClick={() => navigate('/')} className='cursor-pointer h-10 sm:h-14 object-contain hover:opacity-90 transition' src={assets.logo} alt="PSNA Logo" />
                 </div>
 
                 {/* Right: Theme Toggle + Auth */}
@@ -70,6 +65,10 @@ const Navbar = () => {
                             {/* Desktop Links */}
                             {user?.role === 'student' && (
                                 <div className='hidden md:flex gap-6'>
+                                    <Link to='/' className='text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-royal-blue dark:hover:text-blue-400 transition relative group'>
+                                        Home
+                                        <span className={`absolute bottom-0 left-0 h-0.5 bg-royal-blue transition-all ${isHome ? 'w-full' : 'w-0 group-hover:w-full'}`}></span>
+                                    </Link>
                                     <Link to='/applications' className='text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-royal-blue dark:hover:text-blue-400 transition relative group'>
                                         Applied Jobs
                                         <span className='absolute bottom-0 left-0 w-0 h-0.5 bg-royal-blue transition-all group-hover:w-full'></span>
@@ -84,7 +83,7 @@ const Navbar = () => {
                             {companyToken && <Link to='/dashboard' className='hidden md:block text-sm font-semibold text-royal-blue bg-blue-50 dark:bg-blue-900/30 px-4 py-2 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition border border-blue-100 dark:border-blue-800'>Recruiter Dashboard</Link>}
 
                             {/* User Avatar + Dropdown */}
-                            <div className='relative'>
+                            <div className='relative z-50'>
                                 <button
                                     onClick={() => setMenuOpen(!menuOpen)}
                                     className='flex items-center gap-3 pl-2 pr-1 py-1 rounded-full hover:bg-slate-50 dark:hover:bg-slate-800 transition border border-transparent hover:border-slate-200 dark:hover:border-slate-700 group'
@@ -104,7 +103,7 @@ const Navbar = () => {
                                 {menuOpen && (
                                     <>
                                         <div className='fixed inset-0 z-40' onClick={() => setMenuOpen(false)}></div>
-                                        <div className='absolute right-0 top-16 w-64 glass-card rounded-2xl shadow-2xl overflow-hidden z-50 animate-fade-in origin-top-right transform'>
+                                        <div className='absolute right-0 top-[120%] w-64 glass-card rounded-2xl shadow-2xl overflow-hidden z-[9999] animate-fade-in origin-top-right transform'>
                                             <div className='px-6 py-5 bg-gradient-to-br from-slate-50 to-white dark:from-slate-800 dark:to-slate-900 border-b dark:border-slate-700 flex flex-col gap-2'>
                                                 <p className='text-sm font-bold text-slate-800 dark:text-white truncate'>{activeUser.name}</p>
                                                 <p className='text-xs font-medium text-slate-500 dark:text-slate-400 capitalize px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 w-fit border border-slate-200 dark:border-slate-600'>{activeUser.role || 'User'}</p>
@@ -125,14 +124,24 @@ const Navbar = () => {
                                                     </>
                                                 )}
                                                 {user?.role === 'coordinator' && (
-                                                    <button onClick={() => { setMenuOpen(false); navigate('/dashboard/coordinator') }} className='w-full text-left px-6 py-3 text-sm text-slate-600 dark:text-slate-300 hover:bg-purple-50 dark:hover:bg-purple-900/30 hover:text-imperial-purple flex items-center gap-3 transition font-medium'>
-                                                        <span>📊</span> Dashboard
-                                                    </button>
+                                                    <>
+                                                        <button onClick={() => { setMenuOpen(false); navigate('/coordinator-profile') }} className='w-full text-left px-6 py-3 text-sm text-slate-600 dark:text-slate-300 hover:bg-purple-50 dark:hover:bg-purple-900/30 hover:text-imperial-purple flex items-center gap-3 transition font-medium'>
+                                                            <span>👤</span> My Profile
+                                                        </button>
+                                                        <button onClick={() => { setMenuOpen(false); navigate('/dashboard/coordinator') }} className='w-full text-left px-6 py-3 text-sm text-slate-600 dark:text-slate-300 hover:bg-purple-50 dark:hover:bg-purple-900/30 hover:text-imperial-purple flex items-center gap-3 transition font-medium'>
+                                                            <span>📊</span> Dashboard
+                                                        </button>
+                                                    </>
                                                 )}
                                                 {companyToken && (
-                                                    <button onClick={() => { setMenuOpen(false); navigate('/dashboard') }} className='w-full text-left px-6 py-3 text-sm text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-royal-blue flex items-center gap-3 transition font-medium'>
-                                                        <span>🏢</span> Dashboard
-                                                    </button>
+                                                    <>
+                                                        <button onClick={() => { setMenuOpen(false); navigate('/dashboard/profile') }} className='w-full text-left px-6 py-3 text-sm text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-royal-blue flex items-center gap-3 transition font-medium'>
+                                                            <span>👤</span> My Profile
+                                                        </button>
+                                                        <button onClick={() => { setMenuOpen(false); navigate('/dashboard') }} className='w-full text-left px-6 py-3 text-sm text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-royal-blue flex items-center gap-3 transition font-medium'>
+                                                            <span>🏢</span> Dashboard
+                                                        </button>
+                                                    </>
                                                 )}
                                             </div>
 
